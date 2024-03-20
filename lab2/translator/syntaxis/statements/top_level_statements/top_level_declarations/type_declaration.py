@@ -1,0 +1,1 @@
+../../statements/declarations/type_declaration.py

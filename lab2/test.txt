@@ -1,17 +1,30 @@
-package main
-import "fmt"
-func BubbleSort(array[] int)[]int {
-   for i:=0; i< len(array)-1; i++ {
-      for j:=0; j < len(array)-i-1; j++ {
-         if (array[j] > array[j+1]) {
-            array[j], array[j+1] = array[j+1], array[j]
-         }
-      }
-   }
-   return array
+var SIZE = 6
+
+func partition(arr [SIZE]int, low, high int) [SIZE]int {
+	i := low
+	for j := low; j < high; j++ {
+		if arr[j] < arr[high] {
+			arr[i], arr[j] = arr[j], arr[i]
+			i++
+		}
+	}
+	arr[i], arr[high] = arr[high], arr[i]
+	return arr
 }
+func quickSort(arr [SIZE]int, low, high int) [SIZE]int {
+	if low < high[0] {
+		var p int
+		arr = partition(arr, low, high)
+		arr = quickSort(arr, low, p-1)
+		arr = quickSort(arr, p+1, high)
+	}
+	return arr
+}
+func quickSortStart(arr [SIZE]int) [SIZE]int {
+	return quickSort(arr, 0, len(arr)-1)
+}
+
 func main() {
-   array := []int{11, 14, 3, 8, 18, 17, 43};
-   some := 2e-10;
-   fmt.Println(BubbleSort(array))
+   fmt.Println(quickSortStart([SIZE]int{5, 6, 7, 2, 1, 0}))
+   a = a + b * c + d
 }
