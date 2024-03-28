@@ -6,8 +6,9 @@ from ....lexic.tokens import token_table, Token, TokenType
 from ....lexic.operators_punctuation import PunctuationName
 from ...syntaxis_exception import SyntaxisException
 from ....lexic.keywords import KeywordName
+from ....lexic.identifiers_and_types import Identifier
 from .if_statements.block import Block
-from typing import ClassVar
+from typing import ClassVar, Dict
 
 
 
@@ -18,6 +19,7 @@ class ForStatement(Statement):
     condition: Expression
     post_statement: SimpleStatement
     for_body: Block
+    identifier_table: Dict[str, Identifier]
 
     @classmethod
     def get_node(cls, token_table_index):

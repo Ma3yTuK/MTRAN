@@ -6,6 +6,9 @@ from .operands.identifiers.identifier_node import IdentifierNode
 from ...expression import Expression
 from ....suffixes.suffix import Suffix
 from ....suffixes.arguments_suffix import ArgumentsSuffix
+from ....suffixes.index_suffix import IndexSuffix
+from ....suffixes.selector_suffix import SelectorSuffix
+from .....lexic.identifiers_and_types import identifier_tables, FunctionTypeL, ArrayTypeL, UserType
 from .....lexic.tokens import Token, token_table, TokenType
 
 
@@ -42,3 +45,21 @@ class PrimaryExpressionWithSuffix(PrimaryExpression):
         new_node = new_primary_expression
 
         return token_table_index, new_node
+
+    def eval_type(self):
+
+        if not hasattr(self, "__type"):
+
+            if isinstance(self.expression_suffix, ArgumentsSuffix) and isinstance(self.primary_expression.eval_type(), FunctionTypeL):
+                self.__type =  self.primary_expression.eval_type().return_type
+            
+            if isinstance(self.expression_suffix, IndexSuffix) and isinstance(self.primary_expression.eval_type(), ArrayTypeL):
+                self.__type = self.primary_expression.eval_type().value_type
+
+            if isinstance(self.expression_suffix, SelectorSuffix) and isinstance(self.primary_expression.eval_type(), UserType) and self.expression_suffix.operand_identifier.identifier_name in self.primary_expression.eval_type().fields:
+                self.__type = self.primary_expression.eval_type().fields[self.expression_suffix.operand_identifier.identifier_name].field_type
+
+            if not hasattr(self, "__type"):
+                self.__type = None
+
+        return self.__type

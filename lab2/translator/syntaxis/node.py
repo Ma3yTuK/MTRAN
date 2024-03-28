@@ -1,11 +1,14 @@
 from dataclasses import dataclass
 from typing import ClassVar
 import random
+from ..lexic.tokens import Token
 
 
 
 @dataclass
 class Node:
+    starting_token: Token
+    
     child_order: ClassVar = []
     
     @classmethod
@@ -19,6 +22,8 @@ class Node:
 
         return token_table_index, None
 
+    def check_sematrics(self):
+        pass
 
     def __str__(self):
         result = self.__class__.__name__ + '\n'

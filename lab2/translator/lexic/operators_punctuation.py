@@ -27,24 +27,9 @@ class OperatorName(StrEnum):
     O_LOR = "||"
     O_LNOT = "!"
 
-    O_AND_OR_DEREF = "&"
-    O_OR = "|"
-    O_XOR = "^"
-    O_BLEFT_SHIFT = "<<"
-    O_BRIGHT_SHIFT = ">>"
+    O_DEREF = "&"
 
     O_ASS = "="
-
-    O_PLUS_ASS = "+="
-    O_MINUS_ASS = "-="
-    O_OR_ASS = "|="
-    O_XOR_ASS = "^="
-    O_MUL_OR_REF_ASS = "*="
-    O_DIV_ASS = "/="
-    O_MOD_ASS = "%="
-    O_BLEFT_SHIFT_ASS = "<<"
-    O_BRIGHT_SHIFT_ASS = ">>"
-    O_AND_OR_DEREF_ASS = "&"
 
     O_INIT = ":="
 
@@ -65,40 +50,44 @@ class PunctuationName(StrEnum):
 
 
 assignment_operators = {
-    OperatorName.O_ASS,
-    OperatorName.O_PLUS_ASS,
-    OperatorName.O_MINUS_ASS,
-    OperatorName.O_OR_ASS,
-    OperatorName.O_XOR_ASS,
-    OperatorName.O_MUL_OR_REF_ASS,
-    OperatorName.O_DIV_ASS,
-    OperatorName.O_MOD_ASS,
-    OperatorName.O_BLEFT_SHIFT_ASS,
-    OperatorName.O_BRIGHT_SHIFT_ASS,
-    OperatorName.O_AND_OR_DEREF_ASS
+    OperatorName.O_PLUS,
+    OperatorName.O_MINUS,
+    OperatorName.O_MUL_OR_REF,
+    OperatorName.O_DIV,
+    OperatorName.O_MOD
 }
 
 
-binary_operators = {
+numeric_binary_operators_number = {
     OperatorName.O_PLUS,
     OperatorName.O_MINUS,
-    OperatorName.O_OR,
-    OperatorName.O_XOR,
     OperatorName.O_MUL_OR_REF,
     OperatorName.O_DIV,
-    OperatorName.O_MOD,
-    OperatorName.O_BLEFT_SHIFT,
-    OperatorName.O_BRIGHT_SHIFT,
-    OperatorName.O_AND_OR_DEREF,
-    OperatorName.O_EQ,
-    OperatorName.O_NQ,
-    OperatorName.O_GT,
-    OperatorName.O_LT,
+    OperatorName.O_MOD
+}
+
+
+numeric_binary_operators_bool = {
     OperatorName.O_GE,
     OperatorName.O_LE,
+    OperatorName.O_LT,
+    OperatorName.O_GT
+}
+
+
+any_binray_operators_bool = {
+    OperatorName.O_EQ,
+    OperatorName.O_NQ
+}
+
+
+boolean_binary_operators = {
     OperatorName.O_LAND,
     OperatorName.O_LOR
 }
+
+
+binary_operators = numeric_binary_operators_bool | numeric_binary_operators_number | any_binray_operators_bool | boolean_binary_operators
 
 
 binary_operator_precedence = {
@@ -115,25 +104,31 @@ binary_operator_precedence = {
     OperatorName.O_LE : 3,
     OperatorName.O_LAND : 2,
     OperatorName.O_LOR : 1,
-    OperatorName.O_AND_OR_DEREF : 5,
-    OperatorName.O_OR : 4,
-    OperatorName.O_XOR : 4,
-    OperatorName.O_BLEFT_SHIFT : 5,
-    OperatorName.O_BRIGHT_SHIFT : 5
 }
 
 
-unary_operators = {
+numeric_unary_operators = {
     OperatorName.O_PLUS,
-    OperatorName.O_MINUS,
-    OperatorName.O_LNOT,
-    OperatorName.O_XOR,
-    OperatorName.O_MUL_OR_REF,
-    OperatorName.O_AND_OR_DEREF
+    OperatorName.O_MINUS
 }
 
 
-operators = binary_operators | unary_operators | assignment_operators | {
+boolean_unary_operators = {
+    OperatorName.O_LNOT
+}
+
+
+any_unary_operators = {
+    OperatorName.O_MUL_OR_REF,
+    OperatorName.O_DEREF
+}
+
+
+unary_operators = numeric_unary_operators | boolean_unary_operators | any_unary_operators
+
+
+operators = binary_operators | unary_operators | {
+    OperatorName.O_ASS,
     OperatorName.O_INCREMENT, 
     OperatorName.O_DECREMENT, 
     OperatorName.O_ASS, 

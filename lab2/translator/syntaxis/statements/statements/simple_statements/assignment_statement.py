@@ -9,16 +9,23 @@ from ....syntaxis_exception import SyntaxisException
 
 @dataclass
 class AssignmentOperator(Node):
-    operator: str
+    operator: str | None
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_token_table_index = token_table_index
 
-        if token_table[token_table_index].token_type != TokenType.operator or token_table[token_table_index].name not in assignment_operators:
+        if token_table[new_token_table_index].token_type == TokenType.operator and token_table[new_token_table_index].name in assignment_operators:
+            new_token_table_index += 1
+            new_operator = token_table[token_table_index].name
+        else:
+            new_operator = None
+
+        if token_table[new_token_table_index].token_type != TokenType.operator or token_table[new_token_table_index].name != OperatorName.O_ASS:
             return token_table_index, None
         
-        new_operator = token_table[token_table_index].name
-        token_table_index += 1
+        new_token_table_index += 1
+        token_table_index = new_token_table_index
         new_node = cls(new_operator)
 
         return token_table_index, new_node

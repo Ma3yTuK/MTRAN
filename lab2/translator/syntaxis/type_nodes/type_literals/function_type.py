@@ -4,6 +4,7 @@ from ..type_node import TypeNode
 from ...node import Node
 from ...expressions.unary_expressions.primary_expressions.operands.identifiers.identifier_list import IdentifierListNode
 from ....lexic.tokens import token_table, Token, TokenType
+from ....lexic.identifiers_and_types import FunctionTypeL
 from typing import List
 from ...syntaxis_exception import SyntaxisException
 from ....lexic.operators_punctuation import PunctuationName
@@ -30,6 +31,16 @@ class ParameterDeclaration(Node):
 
         new_node = cls(new_fields, new_fields_type)
         return new_token_table_index, new_node
+
+    def eval_type(self):
+
+        if not hasattr(self, "__type"):
+            self.__type = [self.fields_type.eval_type()]
+
+            if self.fields != None:
+                self.__type *= len(self.fields.identifier_list)
+
+        return self.__type
         
 
 @dataclass
@@ -66,6 +77,16 @@ class ParameterList(Node):
         new_node = cls(new_parameters)
 
         return token_table_index, new_node
+    
+    def eval_type(self):
+
+        if not hasattr(self, "__type"):
+            self.__type = []
+
+            for parameter in self.parameters:
+                self.__type += parameter.eval_type()
+
+        return self.__type
 
         
 @dataclass
@@ -85,6 +106,20 @@ class Signature(Node):
         new_node = cls(new_parameters, new_result)
 
         return new_token_table_index, new_node
+
+    def eval_type(self):
+
+        if not hasattr(self, "__type"):
+            parameters_types = self.parameters.eval_type()
+
+            if result != None:
+                result_type = self.result.eval_type()
+            else:
+                result_type = None
+
+            self.__type = FunctionTypeL(parameters_types, result_type)
+
+        return self.__type
 
 
 @dataclass
@@ -106,3 +141,10 @@ class FuncType(TypeLiteral):
         new_node = cls(new_signature)
 
         return token_table_index, new_node
+
+    def eval_type(self):
+
+        if not hasattr(self, "__type"):
+            self.__type = self.signature.eval_type()
+
+        return self.__type

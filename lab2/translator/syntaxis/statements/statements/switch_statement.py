@@ -2,10 +2,11 @@ from .statement import Statement
 from dataclasses import dataclass
 from ...expressions.expression import Expression
 from .statement_list import StatementListNode
-from typing import List
+from typing import List, Dict
 from ...node import Node
 from ....lexic.tokens import token_table, Token, TokenType
 from ....lexic.keywords import KeywordName
+from ....lexic.identifiers_and_types import Identifier
 from ...syntaxis_exception import SyntaxisException
 from ....lexic.operators_punctuation import PunctuationName
 
@@ -48,6 +49,7 @@ class ExpressionCaseClause(Node):
 class SwitchStatement(Statement):
     switch_expression: Expression
     cases: List[ExpressionCaseClause]
+    identifier_table: Dict[str, Identifier]
 
     @classmethod
     def get_node(cls, token_table_index):

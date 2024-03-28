@@ -31,3 +31,10 @@ class ParanthesisOperand(Operand):
         new_node = cls(new_addressable, new_expression)
 
         return token_table_index, new_node
+
+    def eval_type(self):
+
+        if not hasattr(self, "__type"):
+            self.__type = self.inner_expression.eval_type()
+        
+        return self.__type

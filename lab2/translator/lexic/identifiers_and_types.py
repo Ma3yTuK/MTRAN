@@ -4,11 +4,15 @@ from typing import Dict, List, ClassVar
 from .characters import word_separators, letters, character, skip_word, word_characters
 from enum import StrEnum
 from ..settings import PTR_SIZE
+import struct
 
 
-@dataclass
-class Identifier:
-    pass
+
+STRING_SIZE = 256
+FLOAT_SIZE = 4
+INT_SIZE = 4
+BOOL_SIZE = 1
+TYPE_SIZE = 1
 
 
 ###Types###
@@ -16,159 +20,222 @@ class Identifier:
 
 class TypeName(StrEnum):
     T_INT = "int"
-    T_INT8 = "int8"
-    T_INT16 = "int16"
-    T_INT32 = "int32"
-    T_INT64 = "int64"
     T_UINT = "uint"
-    T_UINT8 = "uint8"
-    T_UINT16 = "uint16"
-    T_UINT32 = "uint32"
-    T_UINT64 = "uint64"
     T_FLOAT32 = "float32"
-    T_FLOAT64 = "float64"
     T_BOOL = "bool"
     T_STRING = "string"
 
 
 type_sizes: Dict[TypeName, int] = {
     TypeName.T_INT: 4,
-    TypeName.T_INT8: 1,
-    TypeName.T_INT16: 2,
-    TypeName.T_INT32: 4,
-    TypeName.T_INT64: 8,
     TypeName.T_UINT: 4,
-    TypeName.T_UINT8: 1,
-    TypeName.T_UINT16: 2,
-    TypeName.T_UINT32: 4,
-    TypeName.T_UINT64: 8,
-    TypeName.T_FLOAT32: 4,
-    TypeName.T_FLOAT64: 8
+    TypeName.T_FLOAT32: 4
 }
 
 
-class TypeAlias(StrEnum):
-    T_INT = "!i"
-    T_INT8 = "!b"
-    T_INT16 = "!h"
-    T_INT32 = "!l"
-    T_INT64 = "!q"
-    T_UINT = "!I"
-    T_UINT8 = "!B"
-    T_UINT16 = "!H"
-    T_UINT32 = "!L"
-    T_UINT64 = "!Q"
-    T_FLOAT32 = "!f"
-    T_FLOAT64 = "!d"
-    T_STRING = "!s"
-    T_BOOL = "!?"
+type_aliases: Dict[TypeName, str] = {
+    TypeName.T_INT: "!i",
+    TypeName.T_UINT: "!I",
+    TypeName.T_FLOAT32: "!f",
+    TypeName.T_STRING: f"!{STRING_SIZE}s",
+    TypeName.T_BOOL: "!?"
+}
 
 
 @dataclass
 class Type:
+
+    def from_python(self, value):
+        pass
+    
+    def to_python(self, value):
+        pass
+
+
+@dataclass
+class NormalType(Type):
+
+    def from_python(self, value):
+        pass
+    
+    def to_python(self, value):
+        pass
+
+
+@dataclass
+class MetaType(Type):
+    u_type: NormalType
+
+    size: ClassVar[int] = TYPE_SIZE
+
+
+@dataclass
+class BasicType(NormalType):
     pass
 
 
 @dataclass
-class BasicType(Type, Identifier):
+class CompositType(NormalType):
     pass
 
 
 @dataclass
-class CompositType(Type):
-    pass
-
-
-@dataclass
-class UserType(Type, Identifier):
+class UserType(NormalType):
 
     @dataclass
     class TypeField:
         field_name: str
-        field_type: BasicType
+        field_type: NormalType
 
     fields: Dict[str, TypeField] # field_name : field
 
     def __post_init__(self):
         self.size = 0
 
-        for field in self.fields:
+        for name, field in self.fields.items():
             self.size += field.field_type.size
+
+    def from_python(self, value):
+        result = bytes()
+
+        for index, (name, field) in enumerate(self.fields.items()):
+            result += field.field_type.from_python(value[index])
+
+        return result
+
+    def to_python(self, value):
+        result = []
+        pos = 0
+
+        for name, field in self.fields.items():
+            new_pos = pos + field.field_type.size
+            result.append(field.field_type.to_python(value[pos:new_pos]))
+            pos = new_pos
+
+        return result
 
 
 @dataclass
-class FunctionType(Type):
-    operands: List[BasicType]
-    return_type: BasicType
+class FunctionTypeL(NormalType):
+    operands: List[NormalType]
+    return_type: NormalType | None
 
-    size: ClassVar[int] = PTR_SIZE
+    size: ClassVar[int] = INT_SIZE
+
+    def from_python(self, value):
+        return struct.pack(type_aliases[TypeName.T_INT], value)
+
+    def to_python(self, value):
+        return struct.unpack(type_aliases[TypeName.T_INT], value)
 
 
 @dataclass
 class NumericType(BasicType):
-    size: int
+    pass
 
 
 @dataclass
 class FloatingNumericType(NumericType):
-    pass
+    size: ClassVar[int] = FLOAT_SIZE
+
+    def from_python(self, value):
+        return struct.pack(type_aliases[TypeName.T_FLOAT32], value)
+
+    def to_python(self, value):
+        return struct.unpack(type_aliases[TypeName.T_FLOAT32], value)
 
 
 @dataclass
 class IntegerNumbericType(NumericType):
-    pass
+    size: ClassVar[int] = INT_SIZE
+
+    def from_python(self, value):
+        return struct.pack(type_aliases[TypeName.T_INT], value)
+
+    def to_python(self, value):
+        return struct.unpack(type_aliases[TypeName.T_INT], value)
 
 
 @dataclass
 class StringType(BasicType):
-    size: ClassVar[int] = PTR_SIZE
+    size: ClassVar[int] = STRING_SIZE
+
+    def from_python(self, value):
+        return struct.pack(type_aliases[TypeName.T_STRING], value.encode())
+
+    def to_python(self, value):
+        return struct.unpack(type_aliases[TypeName.T_STRING], value).decode()
 
 
 @dataclass
 class BoolType(BasicType):
-    size: ClassVar[int] = PTR_SIZE
+    size: ClassVar[int] = BOOL_SIZE
+
+    def from_python(self, value):
+        return struct.pack(type_aliases[TypeName.T_BOOL], value.encode())
+
+    def to_python(self, value):
+        return struct.unpack(type_aliases[TypeName.T_BOOL], value).decode()
 
 
 @dataclass
-class ArrayType(CompositType):
+class ArrayTypeL(CompositType):
     count: int
-    value_type: BasicType
+    value_type: NormalType
 
     def __post_init__(self):
         self.size = self.count * self.value_type.size
+
+    def from_python(self, value):
+        result = bytes()
+
+        for element in value:
+            result += self.value_type.from_python(element)
+
+        return result
+
+    def to_python(self, value):
+        result = []
+        pos = 0
+
+        for index in range(self.count):
+            new_pos = pos + field.field_type.size
+            result.append(self.value_type.to_python(value[pos:new_pos]))
+            pos = new_pos
+
+        return result
     
 
 @dataclass
-class PointerType(BasicType):
-    pointer_type: BasicType
-    size: ClassVar[int] = PTR_SIZE
+class PointerTypeL(NormalType):
+    pointer_type: NormalType
+    size: ClassVar[int] = INT_SIZE
+
+    def from_python(self, value):
+        return struct.pack(type_aliases[TypeName.T_INT], value)
+
+    def to_python(self, value):
+        return struct.unpack(type_aliases[TypeName.T_INT], value)
 
 
 ###Variables###
 
 
 @dataclass
-class Variable(Identifier):
-    value_type: BasicType
-    address: int
+class Identifier:
+    value_type: Type
+    stack_pos: int
+
+    current_stack_pos: ClassVar = 0
 
 
 
 identifier_tables: List[Dict[str, Identifier]] = [{
-    TypeName.T_STRING: StringType(),
-    TypeName.T_INT: IntegerNumbericType(type_sizes[TypeName.T_INT]),
-    TypeName.T_INT8: IntegerNumbericType(type_sizes[TypeName.T_INT8]),
-    TypeName.T_INT16: IntegerNumbericType(type_sizes[TypeName.T_INT16]),
-    TypeName.T_INT32: IntegerNumbericType(type_sizes[TypeName.T_INT32]),
-    TypeName.T_INT64: IntegerNumbericType(type_sizes[TypeName.T_INT64]),
-    TypeName.T_UINT: IntegerNumbericType(type_sizes[TypeName.T_UINT]),
-    TypeName.T_UINT8: IntegerNumbericType(type_sizes[TypeName.T_UINT8]),
-    TypeName.T_UINT16: IntegerNumbericType(type_sizes[TypeName.T_UINT16]),
-    TypeName.T_UINT32: IntegerNumbericType(type_sizes[TypeName.T_UINT32]),
-    TypeName.T_UINT64: IntegerNumbericType(type_sizes[TypeName.T_UINT64]),
-    TypeName.T_FLOAT32: IntegerNumbericType(type_sizes[TypeName.T_FLOAT32]),
-    TypeName.T_FLOAT64: IntegerNumbericType(type_sizes[TypeName.T_FLOAT64]),
-    TypeName.T_BOOL: BoolType()
+    TypeName.T_STRING: Identifier(MetaType(StringType()), 0),
+    TypeName.T_INT: Identifier(MetaType(IntegerNumbericType(type_sizes[TypeName.T_INT])), 0),
+    TypeName.T_UINT: Identifier(MetaType(IntegerNumbericType(type_sizes[TypeName.T_UINT])), 0),
+    TypeName.T_FLOAT32: Identifier(MetaType(IntegerNumbericType(type_sizes[TypeName.T_FLOAT32])), 0),
+    TypeName.T_BOOL: Identifier(MetaType(BoolType()), 0)
 }]
 
 

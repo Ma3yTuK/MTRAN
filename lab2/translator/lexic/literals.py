@@ -1,27 +1,27 @@
 from dataclasses import dataclass
 from .tokens import Token
 from typing import Dict
-from .identifiers_and_types import TypeAlias, TypeName, get_identifier, BasicType, identifier_tables
+from .identifiers_and_types import TypeAlias, TypeName, get_identifier, NormalType, identifier_tables
 from .characters import digits, character, word_separators, skip_number, skip_word, ENCODING_TYPE, exponent
 
 
-INT_TYPE = TypeName.T_INT
-FLOAT_TYPE = TypeName.T_FLOAT32
 
 BOOLEAN_TRUE = "true"
 BOOLEAN_FALSE = "false"
-NIL = "nil"
+
+
+MAX_STRING_LEN = 100
 
 
 @dataclass
 class Literal:
-    value_type: BasicType
+    value_type: NormalType
     value: bytes
 
 
 literals: Dict[str, Literal] = {
-    "true":  Literal(TypeName.T_BOOL, True),
-    "false": Literal(TypeName.T_BOOL, False)
+    "true":  Literal(identifier_tables[0][TypeName.T_BOOL], identifier_tables[0][TypeName.T_BOOL].from_python(True)),
+    "false":  Literal(identifier_tables[0][TypeName.T_BOOL], identifier_tables[0][TypeName.T_BOOL].from_python(False)),
 }
 
 
@@ -39,11 +39,14 @@ def add_literal(line, pos):
 
         if end_pos + 1 == len(line) or end_pos + 2 < len(line) and line[end_pos+1] not in word_separators:
             raise Exception(f"{end_pos}: String literal must end with \"")
-    
+
+        if end_pos + 1 - pos > MAX_STRING_LEN:
+            raise Exception(f"{pos}: String literal is too long")
+
         result = line[pos:end_pos+1]
         
         if result not in literals:
-            literals[result] = Literal(identifier_tables[0][TypeName.T_STRING], result)
+            literals[result] = Literal(identifier_tables[0][TypeName.T_STRING], identifier_tables[0][TypeName.T_STRING].from_python(result))
 
         return end_pos + 1
 
@@ -69,7 +72,7 @@ def add_literal(line, pos):
                     result = line[pos:end_pos]
 
                     if result not in literals:
-                        literals[result] = Literal(identifier_tables[0][TypeName.T_FLOAT32], float(result))
+                        literals[result] = Literal(identifier_tables[0][TypeName.T_FLOAT32], identifier_tables[0][TypeName.T_FLOAT32].from_python(float(result)))
 
                     return end_pos
 
@@ -78,7 +81,7 @@ def add_literal(line, pos):
             result = line[pos:end_pos]
 
             if result not in literals:
-                literals[result] = Literal(identifier_tables[0][TypeName.T_INT], int(result))
+                literals[result] = Literal(identifier_tables[0][TypeName.T_INT], identifier_tables[0][TypeName.T_INT].from_python(int(result)))
 
             return end_pos
 
@@ -89,7 +92,7 @@ def add_literal(line, pos):
     if end_pos + 1 < pos:
         result = line[pos, end_pos]
 
-        if result in {BOOLEAN_FALSE, BOOLEAN_TRUE, NIL}:
+        if result in {BOOLEAN_FALSE, BOOLEAN_TRUE}:
             return end_pos
 
     return pos

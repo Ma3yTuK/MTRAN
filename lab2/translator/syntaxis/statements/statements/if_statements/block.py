@@ -3,13 +3,16 @@ from .if_statement_optional_part import IfStatementOptionalPart
 from dataclasses import dataclass
 from .....lexic.tokens import token_table, Token, TokenType
 from .....lexic.operators_punctuation import PunctuationName
+from .....lexic.identifiers_and_types import Identifier
 from ....syntaxis_exception import SyntaxisException
+from typing import Dict
 
 
 
 @dataclass
 class Block(IfStatementOptionalPart):
     statements: StatementListNode
+    identifier_table: Dict[str, Identifier]
 
     @classmethod
     def get_node(cls, token_table_index):

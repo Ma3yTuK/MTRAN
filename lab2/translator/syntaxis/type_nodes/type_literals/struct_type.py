@@ -8,6 +8,7 @@ from ....lexic.tokens import token_table, Token, TokenType
 from ...syntaxis_exception import SyntaxisException
 from ....lexic.keywords import KeywordName
 from ....lexic.operators_punctuation import PunctuationName
+from ....lexic.identifiers_and_types import UserType
 
 
 
@@ -32,6 +33,17 @@ class FieldDeclaration(Node):
         new_node = cls(new_fields, new_fields_type)
 
         return token_table_index, new_node
+    
+    def eval_type(self):
+
+        if not hasattr(self, "__type"):
+            self.__type = {}
+            field_type = self.fields_type.eval_type()
+
+            for name in self.fields.identifier_list:
+                self.__type[name] = UserType.TypeField(name, field_type)
+
+        return self.__type
 
 
 @dataclass
@@ -67,6 +79,16 @@ class StructBody(Node):
         new_node = cls(new_declarations)
 
         return token_table_index, new_node
+    
+    def eval_type(self):
+
+        if not hasattr(self, "__type"):
+            self.__type = {}
+
+            for declaration in self.declarations:
+                self.__type |= declaration.eval_type()
+
+        return self.__type
 
 
 @dataclass
@@ -88,3 +110,10 @@ class StructType(TypeLiteral):
         new_node = cls(new_body)
 
         return token_table_index, new_node
+    
+    def eval_type(self):
+
+        if not hasattr(self, "__type"):
+            self.__type = self.body.eval_type()
+
+        return self.__type

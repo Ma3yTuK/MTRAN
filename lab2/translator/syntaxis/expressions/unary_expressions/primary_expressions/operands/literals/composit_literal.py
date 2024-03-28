@@ -4,7 +4,7 @@ from ..identifiers.identifier_node import IdentifierNode
 from ......node import Node
 from ......expressions.expression import Expression
 from ......type_nodes.type_node import TypeNode
-from ......type_nodes.basic_type import BasicType
+from ......type_nodes.basic_type import NormalType
 from typing import List
 from .......lexic.tokens import token_table, Token, TokenType
 from ......syntaxis_exception import SyntaxisException
@@ -92,17 +92,24 @@ class CompositLiteral(LiteralNode):
         if new_literal_type == None:
             return token_table_index, None
 
-        new_token_table_index, new_literal_value = LiteralValue.get_node(new_token_table_index)
+        try:
+            new_token_table_index, new_literal_value = LiteralValue.get_node(new_token_table_index)
 
-        if new_literal_value == None:
+            if new_literal_value == None:
+                raise SyntaxisException(token_table[new_token_table_index], "Literal value expected!")
 
-            if isinstance(new_literal_type, BasicType):
-                return token_table_index, None
+            token_table_index = new_token_table_index
+            new_addressable = False
+            new_node = cls(new_addressable, new_literal_type, new_literal_value)
 
-            raise SyntaxisException(token_table[new_token_table_index], "Literal value expected!")
+            return token_table_index, new_node
 
-        token_table_index = new_token_table_index
-        new_addressable = False
-        new_node = cls(new_addressable, new_literal_type, new_literal_value)
+        except SyntaxisException:
+            return token_table_index, None
 
-        return token_table_index, new_node
+    def eval_type(self):
+
+        if not hasattr(self, "__type"):
+            self.__type = self.literal_type.eval_type()
+
+        return self.__type

@@ -4,7 +4,9 @@ from ....expressions.expression import Expression
 from .block import Block
 from .....lexic.tokens import token_table, Token, TokenType
 from .....lexic.keywords import KeywordName
+from .....lexic.identifiers_and_types import Identifier
 from ....syntaxis_exception import SyntaxisException
+from typing import Dict
 
 
 
@@ -13,6 +15,7 @@ class IfStatement(IfStatementOptionalPart):
     condition: Expression
     body: Block
     rest: IfStatementOptionalPart | None
+    identifier_table: Dict[str, Identifier]
     
     @classmethod
     def get_node(cls, token_table_index):

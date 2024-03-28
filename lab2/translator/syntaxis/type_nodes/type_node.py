@@ -5,4 +5,6 @@ from dataclasses import dataclass
 
 @dataclass
 class TypeNode(Node):
-    pass
+    
+    def eval_type(self):
+        pass

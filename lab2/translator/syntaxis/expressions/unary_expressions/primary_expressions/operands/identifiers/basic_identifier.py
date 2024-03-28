@@ -1,6 +1,7 @@
 from .identifier_node import IdentifierNode
 from dataclasses import dataclass
 from .......lexic.tokens import token_table, Token, TokenType
+from .......lexic.identifiers_and_types import identifier_tables
 
 
 
@@ -19,6 +20,21 @@ class BasicIdentifier(IdentifierNode):
         token_table_index += 1
 
         return token_table_index, new_node
+
+    def eval_type(self):
+
+        if not hasattr(self, "__type"):
+
+            for table in reversed(identifier_tables):
+
+                if self.identifier_name in table:
+                    self.__type = table[self.identifier_name].value_type
+                    break
+
+            if not hasattr(self, "__type"):
+                self.__type = None
+        
+        return self.__type
 
     def __str__(self):
         return self.__class__.__name__ + '(' + self.identifier_name + ')\n'

@@ -1,8 +1,9 @@
 from .expression import Expression
 from ..node import Node
 from dataclasses import dataclass
-from ...lexic.operators_punctuation import PunctuationName, OperatorName, binary_operators, binary_operator_precedence
+from ...lexic.operators_punctuation import PunctuationName, OperatorName, binary_operators, binary_operator_precedence, boolean_binary_operators, any_binray_operators_bool, numeric_binary_operators_bool, numeric_binary_operators_number
 from ...lexic.tokens import token_table, Token, TokenType
+from ...lexic.identifiers_and_types import BoolType, NumericType, TypeName, identifier_tables, IntegerNumbericType, FloatingNumericType, NormalType
 from .unary_expressions.unary_expression import UnaryExpression
 from ..syntaxis_exception import SyntaxisException
 
@@ -78,3 +79,35 @@ class BinaryOperation(Expression):
         new_node = arguments_stack[0]
 
         return token_table_index, new_node
+
+    def eval_type(self):
+
+        if not hasattr(self, "__type"):
+
+            if self.operator.operator in numeric_binary_operators_bool | numeric_binary_operators_number:
+                
+                if isinstance(self.argument1.eval_type(), NumericType) and isinstance(self.argument2.eval_type(), NumericType):
+
+                    if self.operator.operator in numeric_binary_operators_bool:
+                        self.__type = identifier_tables[0][TypeName.T_BOOL].value_type.u_type
+                    else:
+
+                        if isinstance(self.argument1.eval_type(), FloatingNumericType) or isinstance(self.argument2.eval_type(), FloatingNumericType):
+                            self.__type = identifier_tables[0][TypeName.T_FLOAT32].value_type.u_type
+                        else:
+                            self.__type = identifier_tables[0][TypeName.T_INT].value_type.u_type
+
+            if self.operator.operator in boolean_binary_operators:
+
+                if isinstance(self.argument1.eval_type(), BoolType) and isinstance(self.argument2.eval_type(), BoolType):
+                    self.__type = identifier_tables[0][TypeName.T_BOOL].value_type.u_type
+
+            if self.operator.operator in any_binray_operators_bool:
+
+                if isinstance(self.argument1.eval_type(), NormalType) and isinstance(self.argument2.eval_type(), NormalType):
+                    self.__type = identifier_tables[0][TypeName.T_BOOL].value_type.u_type
+
+            if not hasattr(self, "__type"):
+                self.__type = None
+        
+        return self.__type

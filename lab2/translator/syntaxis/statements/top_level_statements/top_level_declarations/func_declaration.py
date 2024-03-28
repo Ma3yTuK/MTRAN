@@ -14,6 +14,7 @@ class FuncDeclaration(TopLevelDeclaration):
     name: IdentifierNode
     signature: Signature
     body: Block
+    identifier_table: Dict[str, Identifier]
 
     @classmethod
     def get_node(cls, token_table_index):

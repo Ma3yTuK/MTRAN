@@ -4,6 +4,7 @@ from ..type_node import TypeNode
 from ...node import Node
 from ....lexic.tokens import token_table, Token, TokenType
 from ....lexic.operators_punctuation import OperatorName
+from ....lexic.identifiers_and_types import PointerTypeL
 from ...expressions.unary_expressions.primary_expressions.operands.identifiers.identifier_list import IdentifierListNode
 from typing import List
 from ...syntaxis_exception import SyntaxisException
@@ -29,4 +30,10 @@ class PointerType(Node):
         new_node = cls(new_underlying_type)
 
         return token_table_index, new_node
+
+    def eval_type(self):
         
+        if not hasattr(self, "__type"):
+            self.__type = PointerTypeL(self.underlying_type.eval_type())
+
+        return self.__type
