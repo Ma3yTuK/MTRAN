@@ -9,17 +9,19 @@ from ...syntaxis_exception import SyntaxisException
 
 @dataclass
 class ContinueStatement(Statement):
+    for_statement: ForStatement
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
 
         if token_table[token_table_index].token_type != TokenType.keyword or token_table[token_table_index].name != KeywordName.K_CONTINUE:
             return token_table_index, None
         
-        if ForStatement.forcount == 0:
+        if not ForStatement.for_stack:
             raise SyntaxisException(token_table[token_table_index], "Continue must be inside for")
 
         token_table_index += 1
-        new_node = cls()
+        new_node = cls(new_starting_token, ForStatement.for_stack[-1])
 
         return token_table_index, new_node

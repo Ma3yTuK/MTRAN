@@ -12,12 +12,13 @@ class ReturnStatement(Statement):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
 
         if token_table[token_table_index].token_type != TokenType.keyword or token_table[token_table_index].name != KeywordName.K_RETURN:
             return token_table_index, None
 
         token_table_index += 1
         token_table_index, new_value = Expression.get_node(token_table_index)
-        new_node = cls(new_value)
+        new_node = cls(new_starting_token, new_value)
 
         return token_table_index, new_node

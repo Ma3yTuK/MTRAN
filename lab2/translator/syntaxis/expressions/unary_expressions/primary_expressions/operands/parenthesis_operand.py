@@ -13,6 +13,7 @@ class ParanthesisOperand(Operand):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
 
         if token_table[token_table_index].token_type != TokenType.operator or token_table[token_table_index].name != PunctuationName.P_PARENTHESES_O:
             return token_table_index, None
@@ -24,17 +25,17 @@ class ParanthesisOperand(Operand):
             raise SyntaxisException(token_table[token_table_index], "Expression expected!")
 
         if token_table[token_table_index].token_type != TokenType.operator or token_table[token_table_index].name != PunctuationName.P_PARENTHESES_C:
-            raise SyntaxisException(token_table[token_table_index], "Closing parenthesis expected!")
+            raise SyntaxisException(new_starting_token, "Closing parenthesis expected!")
 
         token_table_index += 1
         new_addressable = new_expression.addressable
-        new_node = cls(new_addressable, new_expression)
+        new_node = cls(token_table[token_table_index], new_addressable, new_expression)
 
         return token_table_index, new_node
 
     def eval_type(self):
 
-        if not hasattr(self, "__type"):
-            self.__type = self.inner_expression.eval_type()
+        if not hasattr(self, "_type"):
+            self._type = self.inner_expression.eval_type()
         
-        return self.__type
+        return self._type

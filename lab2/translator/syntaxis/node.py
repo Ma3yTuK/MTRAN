@@ -22,7 +22,7 @@ class Node:
 
         return token_table_index, None
 
-    def check_sematrics(self):
+    def check_semantics(self):
         pass
 
     def __str__(self):

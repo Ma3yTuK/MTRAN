@@ -1,6 +1,7 @@
 from .node import Node
 from dataclasses import dataclass
 from .statements.top_level_statements.top_level_statement_list import TopLevelStatementListNode
+from ..lexic.tokens import token_table
 
 
 
@@ -10,10 +11,11 @@ class PragramNode(Node):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
         new_token_table_index, new_top_level_statements = TopLevelStatementListNode.get_node(token_table_index)
 
         if new_top_level_statements != None:
-            new_node = cls(new_top_level_statements)
+            new_node = cls(new_starting_token, new_top_level_statements)
             return new_token_table_index, new_node
 
         return token_table_index, None

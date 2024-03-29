@@ -2,10 +2,11 @@ from .type_literal import TypeLiteral
 from dataclasses import dataclass
 from ..type_node import TypeNode
 from ...node import Node
-from ...expressions.unary_expressions.primary_expressions.operands.identifiers.identifier_list import IdentifierListNode
+from ...identifiers.identifier_list import IdentifierListNode
 from typing import List
 from ....lexic.tokens import token_table, Token, TokenType
 from ...syntaxis_exception import SyntaxisException
+from ...semantics_exception import SemanticsException
 from ....lexic.keywords import KeywordName
 from ....lexic.operators_punctuation import PunctuationName
 from ....lexic.identifiers_and_types import UserType
@@ -19,6 +20,7 @@ class FieldDeclaration(Node):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
         new_token_table_index, new_fields = IdentifierListNode.get_node(token_table_index)
 
         if new_fields == None:
@@ -30,20 +32,20 @@ class FieldDeclaration(Node):
         if new_fields_type == None:
             raise SyntaxisException(token_table[token_table_index], "Type expected")
         
-        new_node = cls(new_fields, new_fields_type)
+        new_node = cls(new_starting_token, new_fields, new_fields_type)
 
         return token_table_index, new_node
     
     def eval_type(self):
 
-        if not hasattr(self, "__type"):
-            self.__type = {}
+        if not hasattr(self, "_type"):
+            self._type = {}
             field_type = self.fields_type.eval_type()
 
             for name in self.fields.identifier_list:
-                self.__type[name] = UserType.TypeField(name, field_type)
+                self._type[name] = UserType.TypeField(name, field_type)
 
-        return self.__type
+        return self._type
 
 
 @dataclass
@@ -52,6 +54,7 @@ class StructBody(Node):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
 
         if token_table[token_table_index].token_type != TokenType.operator or token_table[token_table_index].name != PunctuationName.P_BRACES_O:
             return token_table_index, None
@@ -76,19 +79,19 @@ class StructBody(Node):
             raise SyntaxisException(token_table[token_table_index], "Struct cannot be blank!")
 
         token_table_index += 1
-        new_node = cls(new_declarations)
+        new_node = cls(new_starting_token, new_declarations)
 
         return token_table_index, new_node
     
     def eval_type(self):
 
-        if not hasattr(self, "__type"):
-            self.__type = {}
+        if not hasattr(self, "_type"):
+            self._type = {}
 
             for declaration in self.declarations:
-                self.__type |= declaration.eval_type()
+                self._type |= declaration.eval_type()
 
-        return self.__type
+        return self._type
 
 
 @dataclass
@@ -97,6 +100,7 @@ class StructType(TypeLiteral):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
         
         if token_table[token_table_index].token_type != TokenType.keyword or token_table[token_table_index].name != KeywordName.K_STRUCT:
             return token_table_index, None
@@ -107,13 +111,13 @@ class StructType(TypeLiteral):
         if new_body == None:
             raise SyntaxisException(token_table[token_table_index], "Expected struct body!")
 
-        new_node = cls(new_body)
+        new_node = cls(new_starting_token, new_body)
 
         return token_table_index, new_node
     
     def eval_type(self):
 
-        if not hasattr(self, "__type"):
-            self.__type = self.body.eval_type()
+        if not hasattr(self, "_type"):
+            self._type = self.body.eval_type()
 
-        return self.__type
+        return self._type

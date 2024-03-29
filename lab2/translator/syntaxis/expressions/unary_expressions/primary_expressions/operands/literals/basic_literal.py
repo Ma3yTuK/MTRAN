@@ -11,26 +11,27 @@ class BasicLiteral(LiteralNode):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
 
         if token_table[token_table_index].token_type != TokenType.literal:
             return token_table_index, None
         
         new_addressable = False
-        new_node = cls(new_addressable, token_table[token_table_index].name)
+        new_node = cls(new_starting_token, new_addressable, token_table[token_table_index].name)
         token_table_index += 1
 
         return token_table_index, new_node
 
     def eval_type(self):
         
-        if not hasattr(self, "__type"):
+        if not hasattr(self, "_type"):
             if self.literal_name in literals:
-                self.__type = literals[self.literal_name].value_type
+                self._type = literals[self.literal_name].value_type
 
-            if not hasattr(self, "__type"):
-                self.__type = None
+            if not hasattr(self, "_type"):
+                self._type = None
 
-        return self.__type
+        return self._type
 
     def __str__(self):
         return self.__class__.__name__ + '(' + self.literal_name + ')\n'

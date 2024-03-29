@@ -3,9 +3,10 @@ from ...node import Node
 from dataclasses import dataclass
 from ....lexic.operators_punctuation import PunctuationName, OperatorName, unary_operators, boolean_unary_operators, any_unary_operators, numeric_unary_operators
 from ....lexic.tokens import token_table, Token, TokenType
-from ....lexic.identifiers_and_types import NumericType, BoolType, PointerTypeL, NormalType
+from ....lexic.identifiers_and_types import NumericType, BoolType, PointerTypeL, Type
 from .unary_expression import UnaryExpression
 from ...syntaxis_exception import SyntaxisException
+from ...semantics_exception import SemanticsException
 
 
 
@@ -15,11 +16,12 @@ class UnaryOperator(Node):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
         
         if token_table[token_table_index].token_type != TokenType.operator or token_table[token_table_index].name not in unary_operators:
             return token_table_index, None
 
-        new_node = cls(token_table[token_table_index].name)
+        new_node = cls(new_starting_token, token_table[token_table_index].name)
         token_table_index += 1
 
         return token_table_index, new_node
@@ -35,6 +37,7 @@ class UnaryOperation(UnaryExpression):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
         new_token_table_index, new_operator = UnaryOperator.get_node(token_table_index)
 
         if new_operator == None:
@@ -54,27 +57,42 @@ class UnaryOperation(UnaryExpression):
         else:
             new_addressable = False
 
-        new_node = cls(new_addressable, new_operator, new_argument)
+        new_node = cls(new_starting_token, new_addressable, new_operator, new_argument)
+        new_node.check_semantics()
 
         return token_table_index, new_node
 
+    def check_semantics(self):
+
+        if self.operator.operator in numeric_unary_operators and not isinstance(self.argument.eval_type(), NumericType):
+            raise SemanticsException(self.argument.starting_token, "Numeric type expected")
+        
+        if self.operator.operator in boolean_unary_operators and not isinstance(self.argument.eval_type(), BoolType):
+            raise SemanticsException(self.argument.starting_token, "Boolean type expected")
+
+        if self.operator.operator == OperatorName.O_MUL_OR_REF and not isinstance(self.argument.eval_type(), PointerTypeL):
+            raise SemanticsException(self, "Pointer type expected")
+
+        if self.operator.operator == OperatorName.O_DEREF and not isinstance(self.argument.eval_type(), Type):
+            raise SemanticsException(self, "Invalid type")
+
     def eval_type(self):
 
-        if not hasattr(self, "__type"):
+        if not hasattr(self, "_type"):
 
             if self.operator.operator in numeric_unary_operators and isinstance(self.argument.eval_type(), NumericType):
-                self.__type = self.argument.eval_type()
+                self._type = self.argument.eval_type()
 
             if self.operator.operator in boolean_unary_operators and isinstance(self.argument.eval_type(), BoolType):
-                self.__type = self.argument.eval_type()
+                self._type = self.argument.eval_type()
 
             if self.operator.operator == OperatorName.O_MUL_OR_REF and isinstance(self.argument.eval_type(), PointerTypeL):
-                self.__type = self.argument.eval_type().pointer_type
+                self._type = self.argument.eval_type().pointer_type
 
-            if self.operator.operator == OperatorName.O_DEREF and isinstance(self.argument.eval_type(), NormalType):
-                self.__type = PointerTypeL(self.argument.eval_type())
+            if self.operator.operator == OperatorName.O_DEREF and isinstance(self.argument.eval_type(), Type):
+                self._type = PointerTypeL(self.argument.eval_type())
             
-            if not hasattr(self, "__type"):
-                self.__type = None
+            if not hasattr(self, "_type"):
+                self._type = None
 
-        return self.__type
+        return self._type

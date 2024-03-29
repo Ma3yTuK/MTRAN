@@ -1,6 +1,6 @@
 from .suffix import Suffix
 from dataclasses import dataclass
-from ..expressions.unary_expressions.primary_expressions.operands.identifiers.identifier_node import IdentifierNode
+from ..identifiers.identifier_node import IdentifierNode
 from ...lexic.tokens import token_table, Token, TokenType
 from ...lexic.operators_punctuation import OperatorName
 from ..syntaxis_exception import SyntaxisException
@@ -13,6 +13,7 @@ class SelectorSuffix(Suffix):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
 
         if token_table[token_table_index].token_type != TokenType.operator or token_table[token_table_index].name != OperatorName.O_PERIOD:
             return token_table_index, None
@@ -23,6 +24,6 @@ class SelectorSuffix(Suffix):
         if new_operand_identifier == None:
             raise SyntaxisException(token_table[token_table_index], "Expected identifier!")
 
-        new_node = cls(new_operand_identifier)
+        new_node = cls(new_starting_token, new_operand_identifier)
 
         return token_table_index, new_node

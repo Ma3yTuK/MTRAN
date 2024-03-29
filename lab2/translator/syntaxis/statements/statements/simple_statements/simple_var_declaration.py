@@ -2,10 +2,11 @@ from ..declarations.var_declaration import VarDeclaration
 from ..simple_statements.simple_statement import SimpleStatement
 from dataclasses import dataclass
 from ...base_var_declaration import BaseVarDeclaration
-from ....expressions.unary_expressions.primary_expressions.operands.identifiers.identifier_list import IdentifierListNode
+from ....identifiers.identifier_list import IdentifierListNode
 from ....expressions.expression_list import ExpressionListNode
 from .....lexic.tokens import token_table, Token, TokenType
 from .....lexic.operators_punctuation import OperatorName, PunctuationName
+from .....lexic.identifiers_and_types import identifier_tables, Variable
 from ....syntaxis_exception import SyntaxisException
 
 
@@ -17,6 +18,7 @@ class SimpleVarDeclaration(SimpleStatement, BaseVarDeclaration):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
         new_token_table_index, new_identifiers = IdentifierListNode.get_node(token_table_index)
 
         if new_identifiers == None or token_table[new_token_table_index].token_type != TokenType.operator or token_table[new_token_table_index].name != OperatorName.O_INIT:
@@ -31,6 +33,19 @@ class SimpleVarDeclaration(SimpleStatement, BaseVarDeclaration):
         if len(new_identifiers.identifier_list) != len(new_values.expression_list):
             raise SyntaxisException(token_table[token_table_index], "Declaration parts have different length!")
 
-        new_node = cls(new_identifiers, new_values)
+        new_node = cls(new_starting_token, new_identifiers, new_values)
+        new_node.check_semantics()
 
         return token_table_index, new_node
+
+
+    def check_semantics(self):
+
+        for i, new_var in enumerate(self.identifiers.identifier_list):
+            
+            if new_var.identifier_name in identifier_tables[-1]:
+                raise SemanticsException(new_var.starting_token, "Name already exists!")
+            else:
+                current_type = self.values.expression_list[i]
+                identifier_tables[-1][new_var.identifier_name] = Variable(current_type.eval_type(), Variable.current_stack_pos)
+                Variable.current_stack_pos += current_type.eval_type().size

@@ -1,1 +1,30 @@
-91
+func partition(arr [6]int, low, high int) [6]int {
+	pivot := arr[high]
+	i := low
+	for j := low; j < high; j++ {
+		if arr[j] < pivot {
+			arr[i], arr[j] = arr[j], arr[i]
+			i++
+		}
+	}
+	arr[i], arr[high] = arr[high], arr[i]
+	return arr
+}
+
+func quickSort(arr [6]int, low, high int) [6]int {
+	if low < high {
+		var p int
+		arr = partition(arr, low, high)
+		arr = quickSort(arr, low, p-1)
+		arr = quickSort(arr, p+1, high)
+	}
+	return arr
+}
+
+func quickSortStart(arr [6]int) [6]int {
+	return quickSort(arr, 0, 5)
+}
+
+func main() {
+    quickSortStart([6]int{5, 6, 7, 2, 1, 0})
+}

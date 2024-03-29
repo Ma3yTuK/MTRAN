@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from .tokens import Token
 from typing import Dict
-from .identifiers_and_types import TypeAlias, TypeName, get_identifier, NormalType, identifier_tables
+from .identifiers_and_types import TypeName, get_identifier, Type, identifier_tables
 from .characters import digits, character, word_separators, skip_number, skip_word, ENCODING_TYPE, exponent
 
 
@@ -15,7 +15,7 @@ MAX_STRING_LEN = 100
 
 @dataclass
 class Literal:
-    value_type: NormalType
+    value_type: Type
     value: bytes
 
 

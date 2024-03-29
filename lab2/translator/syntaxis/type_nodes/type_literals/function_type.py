@@ -2,7 +2,7 @@ from .type_literal import TypeLiteral
 from dataclasses import dataclass
 from ..type_node import TypeNode
 from ...node import Node
-from ...expressions.unary_expressions.primary_expressions.operands.identifiers.identifier_list import IdentifierListNode
+from ...identifiers.identifier_list import IdentifierListNode
 from ....lexic.tokens import token_table, Token, TokenType
 from ....lexic.identifiers_and_types import FunctionTypeL
 from typing import List
@@ -19,6 +19,7 @@ class ParameterDeclaration(Node):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
         new_token_table_index, new_fields = IdentifierListNode.get_node(token_table_index)
         new_token_table_index, new_fields_type = TypeNode.get_node(new_token_table_index)
 
@@ -27,20 +28,20 @@ class ParameterDeclaration(Node):
             if new_fields != None:
                 raise SyntaxisException(token_table[token_table_index], "Expected type")
 
-            return token_table_index, new_token_table_index
+            return token_table_index, None
 
-        new_node = cls(new_fields, new_fields_type)
+        new_node = cls(new_starting_token, new_fields, new_fields_type)
         return new_token_table_index, new_node
 
     def eval_type(self):
 
-        if not hasattr(self, "__type"):
-            self.__type = [self.fields_type.eval_type()]
+        if not hasattr(self, "_type"):
+            self._type = [self.fields_type.eval_type()]
 
             if self.fields != None:
-                self.__type *= len(self.fields.identifier_list)
+                self._type *= len(self.fields.identifier_list)
 
-        return self.__type
+        return self._type
         
 
 @dataclass
@@ -49,6 +50,7 @@ class ParameterList(Node):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
 
         if token_table[token_table_index].token_type != TokenType.operator or token_table[token_table_index].name != PunctuationName.P_PARENTHESES_O:
             return token_table_index, None
@@ -74,19 +76,19 @@ class ParameterList(Node):
             raise SyntaxisException(token_table[token_table_index], "Closing parenthesis expected!")
 
         token_table_index += 1
-        new_node = cls(new_parameters)
+        new_node = cls(new_starting_token, new_parameters)
 
         return token_table_index, new_node
     
     def eval_type(self):
 
-        if not hasattr(self, "__type"):
-            self.__type = []
+        if not hasattr(self, "_type"):
+            self._type = []
 
             for parameter in self.parameters:
-                self.__type += parameter.eval_type()
+                self._type += parameter.eval_type()
 
-        return self.__type
+        return self._type
 
         
 @dataclass
@@ -96,30 +98,31 @@ class Signature(Node):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
         new_token_table_index, new_parameters = ParameterList.get_node(token_table_index)
 
         if new_parameters == None:
             return token_table_index, None
 
         token_table_index = new_token_table_index
-        new_token_table_index, new_result = TypeNode.get_node(token_table_index)
-        new_node = cls(new_parameters, new_result)
+        token_table_index, new_result = TypeNode.get_node(token_table_index)
+        new_node = cls(new_starting_token, new_parameters, new_result)
 
-        return new_token_table_index, new_node
+        return token_table_index, new_node
 
     def eval_type(self):
 
-        if not hasattr(self, "__type"):
+        if not hasattr(self, "_type"):
             parameters_types = self.parameters.eval_type()
 
-            if result != None:
+            if self.result != None:
                 result_type = self.result.eval_type()
             else:
                 result_type = None
 
-            self.__type = FunctionTypeL(parameters_types, result_type)
+            self._type = FunctionTypeL(parameters_types, result_type)
 
-        return self.__type
+        return self._type
 
 
 @dataclass
@@ -128,6 +131,7 @@ class FuncType(TypeLiteral):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
 
         if token_table[token_table_index].token_type != TokenType.keyword or token_table[token_table_index].name != KeywordName.K_FUNC:
             return token_table_index, None
@@ -138,13 +142,13 @@ class FuncType(TypeLiteral):
         if new_signature == None:
             raise SyntaxisException(token_table[token_table_index], "Signature expected!")
         
-        new_node = cls(new_signature)
+        new_node = cls(new_starting_token, new_signature)
 
         return token_table_index, new_node
 
     def eval_type(self):
 
-        if not hasattr(self, "__type"):
-            self.__type = self.signature.eval_type()
+        if not hasattr(self, "_type"):
+            self._type = self.signature.eval_type()
 
-        return self.__type
+        return self._type

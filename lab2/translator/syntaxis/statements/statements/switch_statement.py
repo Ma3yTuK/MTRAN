@@ -6,8 +6,9 @@ from typing import List, Dict
 from ...node import Node
 from ....lexic.tokens import token_table, Token, TokenType
 from ....lexic.keywords import KeywordName
-from ....lexic.identifiers_and_types import Identifier
+from ....lexic.identifiers_and_types import Identifier, identifier_tables, Variable
 from ...syntaxis_exception import SyntaxisException
+from ...semantics_exception import SemanticsException
 from ....lexic.operators_punctuation import PunctuationName
 
 
@@ -21,7 +22,7 @@ class ExpressionCaseClause(Node):
     def get_node(cls, token_table_index):
         is_default_clause = token_table[token_table_index].name == KeywordName.K_DEFAULT
 
-        if token_table[token_table_index].token_type != TokenType.keyword or token_table[token_table_index].name != KeywordName.K_CASE and not is_default_clause:
+        if (token_table[token_table_index].token_type != TokenType.keyword or token_table[token_table_index].name != KeywordName.K_CASE) and not is_default_clause:
             return token_table_index, None
 
         token_table_index += 1
@@ -53,9 +54,14 @@ class SwitchStatement(Statement):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
         
         if token_table[token_table_index].token_type != TokenType.keyword or token_table[token_table_index].name != KeywordName.K_SWITCH:
             return token_table_index, None
+        
+        stored_stack_pos = Variable.current_stack_pos
+        new_identifier_table = {}
+        identifier_tables.append(new_identifier_table)
 
         token_table_index += 1
         token_table_index, new_switch_expression = Expression.get_node(token_table_index)
@@ -72,16 +78,33 @@ class SwitchStatement(Statement):
         if new_case == None:
             raise SyntaxisException(token_table[token_table_index], "Case expected")
 
-        new_cases: List[ExpressionCaseClause] = [new_case]
+        new_cases: List[ExpressionCaseClause] = []
 
         while new_case != None:
-            token_table_index, new_case = ExpressionCaseClause.get_node(token_table_index)
+
+            if new_cases[-1].case_expression == None:
+                raise SyntaxisException(token_table[token_table_index], "Default must be last statement")
+
             new_cases.append(new_case)
+
+            token_table_index, new_case = ExpressionCaseClause.get_node(token_table_index)
 
         if token_table[token_table_index].token_type != TokenType.operator or token_table[token_table_index].name != PunctuationName.P_BRACES_C:
             raise SyntaxisException(token_table[token_table_index], "Closing brace expected")
 
         token_table_index += 1
-        new_node = cls(new_switch_expression, new_cases)
+        new_node = cls(new_starting_token, new_switch_expression, new_cases, new_identifier_table)
+        identifier_tables.pop()
+        Variable.current_stack_pos = stored_stack_pos
+
+        new_node.check_semantics()
 
         return token_table_index, new_node
+
+    def check_semantics(self):
+        expression_type = self.switch_expression.eval_type()
+
+        for case in self.cases:
+            
+            if case.case_expression != None and case.case_expression.eval_type() != expression_type:
+                raise SemanticsException(case.case_expression.starting_token, "Incompatible expression type!")

@@ -6,4 +6,4 @@ from .inc_dec_statement import IncDecStatement
 
 
 
-SimpleStatement.child_order = [AssignmentStatement, SimpleVarDeclaration, IncDecStatement, ExpressionStatement] # order is important here
+SimpleStatement.child_order = [SimpleVarDeclaration, AssignmentStatement, IncDecStatement, ExpressionStatement] # order is important here

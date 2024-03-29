@@ -15,12 +15,15 @@ BOOL_SIZE = 1
 TYPE_SIZE = 1
 
 
+class Identifier:
+    pass
+
+
 ###Types###
 
 
 class TypeName(StrEnum):
     T_INT = "int"
-    T_UINT = "uint"
     T_FLOAT32 = "float32"
     T_BOOL = "bool"
     T_STRING = "string"
@@ -28,14 +31,12 @@ class TypeName(StrEnum):
 
 type_sizes: Dict[TypeName, int] = {
     TypeName.T_INT: 4,
-    TypeName.T_UINT: 4,
     TypeName.T_FLOAT32: 4
 }
 
 
 type_aliases: Dict[TypeName, str] = {
     TypeName.T_INT: "!i",
-    TypeName.T_UINT: "!I",
     TypeName.T_FLOAT32: "!f",
     TypeName.T_STRING: f"!{STRING_SIZE}s",
     TypeName.T_BOOL: "!?"
@@ -43,7 +44,7 @@ type_aliases: Dict[TypeName, str] = {
 
 
 @dataclass
-class Type:
+class Type(Identifier):
 
     def from_python(self, value):
         pass
@@ -53,39 +54,25 @@ class Type:
 
 
 @dataclass
-class NormalType(Type):
-
-    def from_python(self, value):
-        pass
-    
-    def to_python(self, value):
-        pass
-
-
-@dataclass
-class MetaType(Type):
-    u_type: NormalType
-
-    size: ClassVar[int] = TYPE_SIZE
-
-
-@dataclass
-class BasicType(NormalType):
+class BasicType(Type):
     pass
 
 
 @dataclass
-class CompositType(NormalType):
+class CompositType(Type):
     pass
 
 
 @dataclass
-class UserType(NormalType):
+class UserType(Type):
 
     @dataclass
     class TypeField:
         field_name: str
-        field_type: NormalType
+        field_type: Type
+
+        def __eq__(self, other):
+            return self.field_name == other.field_name and self.field_type == other.field_type
 
     fields: Dict[str, TypeField] # field_name : field
 
@@ -113,12 +100,22 @@ class UserType(NormalType):
             pos = new_pos
 
         return result
+    
+    def __eq__(self, other): 
+
+        if not isinstance(other, type(self)):
+            return NotImplemented
+
+        if len(self.fields) != len(other.fields):
+            return False
+
+        return self.fields == other.fields
 
 
 @dataclass
-class FunctionTypeL(NormalType):
-    operands: List[NormalType]
-    return_type: NormalType | None
+class FunctionTypeL(Type):
+    operands: List[Type]
+    return_type: Type | None
 
     size: ClassVar[int] = INT_SIZE
 
@@ -126,7 +123,14 @@ class FunctionTypeL(NormalType):
         return struct.pack(type_aliases[TypeName.T_INT], value)
 
     def to_python(self, value):
-        return struct.unpack(type_aliases[TypeName.T_INT], value)
+        return struct.unpack(type_aliases[TypeName.T_INT], value)[0]
+
+    def __eq__(self, other):
+
+        if not isinstance(other, type(self)):
+            return NotImplemented
+            
+        return self.operands == other.operands and self.return_type == other.return_type
 
 
 @dataclass
@@ -142,7 +146,14 @@ class FloatingNumericType(NumericType):
         return struct.pack(type_aliases[TypeName.T_FLOAT32], value)
 
     def to_python(self, value):
-        return struct.unpack(type_aliases[TypeName.T_FLOAT32], value)
+        return struct.unpack(type_aliases[TypeName.T_FLOAT32], value)[0]
+
+    def __eq__(self, other):
+
+        if not isinstance(other, type(self)):
+            return NotImplemented
+
+        return type(self) == type(other)
 
 
 @dataclass
@@ -153,7 +164,14 @@ class IntegerNumbericType(NumericType):
         return struct.pack(type_aliases[TypeName.T_INT], value)
 
     def to_python(self, value):
-        return struct.unpack(type_aliases[TypeName.T_INT], value)
+        return struct.unpack(type_aliases[TypeName.T_INT], value)[0]
+
+    def __eq__(self, other):
+
+        if not isinstance(other, type(self)):
+            return NotImplemented
+
+        return type(self) == type(other)
 
 
 @dataclass
@@ -164,7 +182,14 @@ class StringType(BasicType):
         return struct.pack(type_aliases[TypeName.T_STRING], value.encode())
 
     def to_python(self, value):
-        return struct.unpack(type_aliases[TypeName.T_STRING], value).decode()
+        return struct.unpack(type_aliases[TypeName.T_STRING], value)[0].decode()
+
+    def __eq__(self, other):
+
+        if not isinstance(other, type(self)):
+            return NotImplemented
+
+        return type(self) == type(other)
 
 
 @dataclass
@@ -172,16 +197,23 @@ class BoolType(BasicType):
     size: ClassVar[int] = BOOL_SIZE
 
     def from_python(self, value):
-        return struct.pack(type_aliases[TypeName.T_BOOL], value.encode())
+        return struct.pack(type_aliases[TypeName.T_BOOL], value)
 
     def to_python(self, value):
-        return struct.unpack(type_aliases[TypeName.T_BOOL], value).decode()
+        return struct.unpack(type_aliases[TypeName.T_BOOL], value)[0]
+
+    def __eq__(self, other):
+
+        if not isinstance(other, type(self)):
+            return NotImplemented
+
+        return type(self) == type(other)
 
 
 @dataclass
 class ArrayTypeL(CompositType):
     count: int
-    value_type: NormalType
+    value_type: Type
 
     def __post_init__(self):
         self.size = self.count * self.value_type.size
@@ -205,24 +237,38 @@ class ArrayTypeL(CompositType):
 
         return result
     
+    def __eq__(self, other):
+
+        if not isinstance(other, type(self)):
+            return NotImplemented
+
+        return self.count == other.count and self.value_type == other.value_type
+    
 
 @dataclass
-class PointerTypeL(NormalType):
-    pointer_type: NormalType
+class PointerTypeL(Type):
+    pointer_type: Type
     size: ClassVar[int] = INT_SIZE
 
     def from_python(self, value):
         return struct.pack(type_aliases[TypeName.T_INT], value)
 
     def to_python(self, value):
-        return struct.unpack(type_aliases[TypeName.T_INT], value)
+        return struct.unpack(type_aliases[TypeName.T_INT], value)[0]
+
+    def __eq__(self, other):
+
+        if not isinstance(other, type(self)):
+            return NotImplemented
+
+        return self.pointer_type == other.pointer_type
 
 
 ###Variables###
 
 
 @dataclass
-class Identifier:
+class Variable(Identifier):
     value_type: Type
     stack_pos: int
 
@@ -231,11 +277,10 @@ class Identifier:
 
 
 identifier_tables: List[Dict[str, Identifier]] = [{
-    TypeName.T_STRING: Identifier(MetaType(StringType()), 0),
-    TypeName.T_INT: Identifier(MetaType(IntegerNumbericType(type_sizes[TypeName.T_INT])), 0),
-    TypeName.T_UINT: Identifier(MetaType(IntegerNumbericType(type_sizes[TypeName.T_UINT])), 0),
-    TypeName.T_FLOAT32: Identifier(MetaType(IntegerNumbericType(type_sizes[TypeName.T_FLOAT32])), 0),
-    TypeName.T_BOOL: Identifier(MetaType(BoolType()), 0)
+    TypeName.T_STRING: StringType(),
+    TypeName.T_INT: IntegerNumbericType(),
+    TypeName.T_FLOAT32: FloatingNumericType(),
+    TypeName.T_BOOL: BoolType()
 }]
 
 

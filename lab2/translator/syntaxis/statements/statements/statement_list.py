@@ -16,6 +16,7 @@ class StatementListNode(Node):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
         new_statement_list: List[Statement] = []
 
         new_token_table_index, new_statement = Statement.get_node(token_table_index)
@@ -34,6 +35,6 @@ class StatementListNode(Node):
             token_table_index += 1
             token_table_index, new_statement = Statement.get_node(token_table_index)
 
-        new_node = cls(new_statement_list)
+        new_node = cls(new_starting_token, new_statement_list)
 
         return token_table_index, new_node

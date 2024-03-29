@@ -2,13 +2,15 @@ from ...statements.declarations.declaration import Declaration
 from ...top_level_statements.top_level_declarations.top_level_declaration import TopLevelDeclaration
 from ....node import Node
 from dataclasses import dataclass
-from ....expressions.unary_expressions.primary_expressions.operands.identifiers.identifier_node import IdentifierNode
+from ....identifiers.identifier_node import IdentifierNode
 from ....type_nodes.type_node import TypeNode
 from typing import List
 from .....lexic.tokens import token_table, Token, TokenType
 from ....syntaxis_exception import SyntaxisException
+from ....semantics_exception import SemanticsException
 from .....lexic.keywords import KeywordName
 from .....lexic.operators_punctuation import PunctuationName
+from .....lexic.identifiers_and_types import identifier_tables
 
 
 
@@ -19,6 +21,7 @@ class TypeSpec(Node):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
         new_token_table_index, new_spec_identifier = IdentifierNode.get_node(token_table_index)
 
         if new_spec_identifier == None:
@@ -30,9 +33,17 @@ class TypeSpec(Node):
         if new_spec_type == None:
             raise SyntaxisException(token_table[token_table_index], "Type expected!")
 
-        new_node = cls(new_spec_identifier, new_spec_type)
+        new_node = cls(new_starting_token, new_spec_identifier, new_spec_type)
+        new_node.check_semantics()
 
         return token_table_index, new_node
+    
+    def check_semantics(self):
+        
+        if self.spec_identifier.identifier_name in identifier_tables[-1]:
+            raise SemanticsException(self.spec_identifier.starting_token, "Name already exists!")
+        else:
+            identifier_tables[-1][self.spec_identifier.identifier_name] = self.spec_type
 
 
 @dataclass
@@ -41,6 +52,7 @@ class TypeDeclaration(Declaration, TopLevelDeclaration):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
         
         if token_table[token_table_index].token_type != TokenType.keyword or token_table[token_table_index].name != KeywordName.K_TYPE:
             return token_table_index, None
@@ -77,10 +89,6 @@ class TypeDeclaration(Declaration, TopLevelDeclaration):
 
             token_table_index += 1
         
-        new_node = cls(new_type_specs)
+        new_node = cls(new_starting_token, new_type_specs)
 
         return token_table_index, new_node
-
-
-
-        

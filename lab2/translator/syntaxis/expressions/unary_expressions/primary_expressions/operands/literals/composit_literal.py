@@ -1,14 +1,16 @@
 from .literal_node import LiteralNode
 from dataclasses import dataclass
-from ..identifiers.identifier_node import IdentifierNode
+from ......identifiers.identifier_node import IdentifierNode
 from ......node import Node
 from ......expressions.expression import Expression
 from ......type_nodes.type_node import TypeNode
-from ......type_nodes.basic_type import NormalType
+from ......type_nodes.basic_type import Type
 from typing import List
 from .......lexic.tokens import token_table, Token, TokenType
-from ......syntaxis_exception import SyntaxisException
+from .......lexic.identifiers_and_types import UserType, ArrayTypeL
 from .......lexic.operators_punctuation import PunctuationName
+from ......syntaxis_exception import SyntaxisException
+from ......semantics_exception import SemanticsException
 
 
 
@@ -19,6 +21,7 @@ class KeyedElement(Node):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
         new_token_table_index, new_key = IdentifierNode.get_node(token_table_index)
 
         if token_table[new_token_table_index].token_type == TokenType.operator and token_table[token_table_index].name == PunctuationName.P_COLON:
@@ -40,7 +43,7 @@ class KeyedElement(Node):
         
             token_table_index = new_token_table_index
             
-        new_node = cls(new_key, new_value)
+        new_node = cls(new_starting_token, new_key, new_value)
 
         return token_table_index, new_node
 
@@ -51,6 +54,7 @@ class LiteralValue(Node):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
         
         if token_table[token_table_index].token_type != TokenType.operator or token_table[token_table_index].name != PunctuationName.P_BRACES_O:
             return token_table_index, None
@@ -75,7 +79,7 @@ class LiteralValue(Node):
             raise SyntaxisException(token_table[token_table_index], "Closing brace expected!")
 
         token_table_index += 1
-        new_node = cls(new_elements)
+        new_node = cls(new_starting_token, new_elements)
 
         return token_table_index, new_node
 
@@ -87,12 +91,14 @@ class CompositLiteral(LiteralNode):
 
     @classmethod
     def get_node(cls, token_table_index):
-        new_token_table_index, new_literal_type = TypeNode.get_node(token_table_index)
-
-        if new_literal_type == None:
-            return token_table_index, None
+        new_starting_token = token_table[token_table_index]
 
         try:
+            new_token_table_index, new_literal_type = TypeNode.get_node(token_table_index)
+
+            if new_literal_type == None:
+                return token_table_index, None
+
             new_token_table_index, new_literal_value = LiteralValue.get_node(new_token_table_index)
 
             if new_literal_value == None:
@@ -100,16 +106,26 @@ class CompositLiteral(LiteralNode):
 
             token_table_index = new_token_table_index
             new_addressable = False
-            new_node = cls(new_addressable, new_literal_type, new_literal_value)
+            new_node = cls(new_starting_token, new_addressable, new_literal_type, new_literal_value)
+            new_node.check_semantics()
 
             return token_table_index, new_node
 
-        except SyntaxisException:
+        except Exception:
             return token_table_index, None
+
+    def check_semantics(self):
+
+        if not isinstance(self.literal_type.eval_type(), UserType) and not isinstance(self.literal_type.eval_type(), ArrayTypeL):
+            raise SemanticsException(self.literal_type.starting_token, "Composit type expected!")
 
     def eval_type(self):
 
-        if not hasattr(self, "__type"):
-            self.__type = self.literal_type.eval_type()
+        if not hasattr(self, "_type"):
 
-        return self.__type
+            if isinstance(self.literal_type.eval_type(), UserType) or isinstance(self.literal_type.eval_type(), ArrayTypeL):
+                self._type = self.literal_type.eval_type()
+            else:
+                self._type = None
+
+        return self._type

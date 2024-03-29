@@ -1,20 +1,20 @@
-from .......lexic.tokens import token_table, TokenType
-from .......lexic.operators_punctuation import PunctuationName
-from ......node import Node
+from ...lexic.tokens import token_table, TokenType
+from ...lexic.operators_punctuation import PunctuationName
+from ..node import Node
 from dataclasses import dataclass
 from typing import List
 from .identifier_node import IdentifierNode
-from .......lexic.identifiers_and_types import Identifier
+from ...lexic.identifiers_and_types import Identifier
 
 
 
 @dataclass
 class IdentifierListNode(Node):
-    addressable: bool
     identifier_list: List[IdentifierNode]
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
         new_identifier_list: List[IdentifierNode] = []
 
         new_token_table_index, new_identifier = IdentifierNode.get_node(token_table_index)
@@ -34,7 +34,6 @@ class IdentifierListNode(Node):
             
             new_identifier_list.append(new_identifier)
 
-        new_addressable = True
-        new_node = cls(new_addressable, new_identifier_list)
+        new_node = cls(new_starting_token, new_identifier_list)
 
         return token_table_index, new_node

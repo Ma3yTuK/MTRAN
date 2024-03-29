@@ -15,6 +15,7 @@ class ExpressionListNode(Node):
 
     @classmethod
     def get_node(cls, token_table_index):
+        new_starting_token = token_table[token_table_index]
         new_expression_list: List[Expression] = []
 
         new_token_table_index, new_expression = Expression.get_node(token_table_index)
@@ -37,6 +38,6 @@ class ExpressionListNode(Node):
             new_addressable = new_addressable and new_expression.addressable
             new_expression_list.append(new_expression)
 
-        new_node = cls(new_addressable, new_expression_list)
+        new_node = cls(new_starting_token, new_addressable, new_expression_list)
 
         return token_table_index, new_node

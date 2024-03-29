@@ -1,8 +1,8 @@
 from .operand import Operand
 from .parenthesis_operand import ParanthesisOperand
 from .literals.literal_node import LiteralNode
-from .identifiers.identifier_node import IdentifierNode
+from .identifier_operand import IdentifierOperand
 
 
 
-Operand.child_order = [LiteralNode, IdentifierNode, ParanthesisOperand]
+Operand.child_order = [LiteralNode, IdentifierOperand, ParanthesisOperand]
