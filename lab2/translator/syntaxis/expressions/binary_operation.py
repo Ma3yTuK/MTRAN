@@ -87,6 +87,8 @@ class BinaryOperation(Expression):
 
     def check_semantics(self):
 
+        if self.argument1.eval_type() != self.argument2.eval_type():
+            raise SemanticsException(self.operator.starting_token, "Invalid operands!")
         if self.operator.operator in numeric_binary_operators_bool | numeric_binary_operators_number and not (isinstance(self.argument1.eval_type(), NumericType) and isinstance(self.argument2.eval_type(), NumericType)):
             raise SemanticsException(self.operator.starting_token, "Numeric operands expected!")
         if self.operator.operator in boolean_binary_operators and not (isinstance(self.argument1.eval_type(), BoolType) and isinstance(self.argument2.eval_type(), BoolType)):
@@ -98,28 +100,33 @@ class BinaryOperation(Expression):
 
         if not hasattr(self, "_type"):
 
-            if self.operator.operator in numeric_binary_operators_bool | numeric_binary_operators_number:
+            if self.operator.operator in numeric_binary_operators_number:
                 
                 if isinstance(self.argument1.eval_type(), NumericType) and isinstance(self.argument2.eval_type(), NumericType):
 
-                    if self.operator.operator in numeric_binary_operators_bool:
-                        self._type = identifier_tables[0][TypeName.T_BOOL]
-                    else:
+                    if self.argument1.eval_type() == self.argument2.eval_type():
+                        self._type = self.argument1.eval_type()
+            
+            if self.operator.operator in numeric_binary_operators_bool:
+                
+                if isinstance(self.argument1.eval_type(), NumericType) and isinstance(self.argument2.eval_type(), NumericType):
 
-                        if isinstance(self.argument1.eval_type(), FloatingNumericType) or isinstance(self.argument2.eval_type(), FloatingNumericType):
-                            self._type = identifier_tables[0][TypeName.T_FLOAT32]
-                        else:
-                            self._type = identifier_tables[0][TypeName.T_INT]
+                    if self.argument1.eval_type() == self.argument2.eval_type():
+                        self._type = identifier_tables[0][TypeName.T_BOOL]
 
             if self.operator.operator in boolean_binary_operators:
 
                 if isinstance(self.argument1.eval_type(), BoolType) and isinstance(self.argument2.eval_type(), BoolType):
-                    self._type = identifier_tables[0][TypeName.T_BOOL]
+                    
+                    if self.argument1.eval_type() == self.argument2.eval_type():
+                        self._type = identifier_tables[0][TypeName.T_BOOL]
 
             if self.operator.operator in any_binray_operators_bool:
 
                 if isinstance(self.argument1.eval_type(), Type) and isinstance(self.argument2.eval_type(), Type):
-                    self._type = identifier_tables[0][TypeName.T_BOOL]
+                    
+                    if self.argument1.eval_type() == self.argument2.eval_type():
+                        self._type = identifier_tables[0][TypeName.T_BOOL]
 
             if not hasattr(self, "_type"):
                 self._type = None

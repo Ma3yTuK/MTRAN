@@ -74,6 +74,9 @@ class AssignmentStatement(SimpleStatement):
 
         for i, expression in enumerate(self.expression_list1.expression_list):
 
+            if expression.eval_type() != self.expression_list2.expression_list[i].eval_type():
+                raise SemanticsException(self.expression_list2.expression_list[i].starting_token, "Invalid type!")
+
             if not (isinstance(expression.eval_type(), NumericType) and isinstance(self.expression_list2.expression_list[i].eval_type(), NumericType)):
 
                 if self.assignment_operator.operator != None:

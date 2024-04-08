@@ -25,7 +25,7 @@ class ParanthesisOperand(Operand):
             raise SyntaxisException(token_table[token_table_index], "Expression expected!")
 
         if token_table[token_table_index].token_type != TokenType.operator or token_table[token_table_index].name != PunctuationName.P_PARENTHESES_C:
-            raise SyntaxisException(new_starting_token, "Closing parenthesis expected!")
+            raise SyntaxisException(token_table[token_table_index], "Closing parenthesis expected!")
 
         token_table_index += 1
         new_addressable = new_expression.addressable
