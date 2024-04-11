@@ -12,3 +12,6 @@ class Expression(Node):
 
     def __str__(self):
         return f"({self.eval_type().__class__.__name__}){super().__str__()}"
+
+    def gen_code(self):
+        pass

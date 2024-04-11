@@ -3,10 +3,12 @@ from ...node import Node
 from dataclasses import dataclass
 from ....lexic.operators_punctuation import PunctuationName, OperatorName, unary_operators, boolean_unary_operators, any_unary_operators, numeric_unary_operators
 from ....lexic.tokens import token_table, Token, TokenType
-from ....lexic.identifiers_and_types import NumericType, BoolType, PointerTypeL, Type
+from ....lexic.identifiers_and_types import NumericType, BoolType, PointerTypeL, Type, IntegerNumbericType
+from ....vm.commands import Commands, add_command, add_literal, add_reference
 from .unary_expression import UnaryExpression
 from ...syntaxis_exception import SyntaxisException
 from ...semantics_exception import SemanticsException
+from struct import pack
 
 
 
@@ -96,3 +98,20 @@ class UnaryOperation(UnaryExpression):
                 self._type = None
 
         return self._type
+
+    def gen_code(self):
+        self.argument.gen_code()
+
+        match self.operator.operator:
+            case OperatorName.O_MINUS:
+                if isinstance(self.argument.eval_type(), IntegerNumbericType):
+                    add_command(Commands.NEG)
+                else:
+                    add_command(Commands.NEGF)
+            case OperatorName.O_LNOT:
+                add_command(Commands.NOT)
+            case OperatorName.O_MUL_OR_REF:
+                add_command(Commands.REF)
+                add_literal(pack('!i', self.argument.eval_type().pointer_type.size), None)
+            case OperatorName.O_DEREF:
+                add_command(Commands.DEREF)

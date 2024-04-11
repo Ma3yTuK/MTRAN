@@ -2,6 +2,7 @@ from .simple_statement import SimpleStatement
 from dataclasses import dataclass
 from ....expressions.expression import Expression
 from .....lexic.tokens import token_table
+from .....vm.commands import Commands, add_command
 
 
 
@@ -21,3 +22,7 @@ class ExpressionStatement(SimpleStatement):
         new_node = cls(new_starting_token, new_statement_expression)
 
         return token_table_index, new_node
+
+    def gen_code(self):
+        self.statement_expression.gen_code()
+        add_command(Commands.ULD)

@@ -16,6 +16,7 @@ class KeywordName(StrEnum):
     K_STRUCT = "struct"
     K_SWITCH = "switch"
     K_CONTINUE = "continue"
+    K_PRINT = "print"
     K_TYPE = "type"
     K_VAR = "var"
 
@@ -35,7 +36,8 @@ keywords = {
     KeywordName.K_SWITCH,
     KeywordName.K_TYPE,
     KeywordName.K_VAR,
-    KeywordName.K_CONTINUE
+    KeywordName.K_CONTINUE,
+    KeywordName.K_PRINT
 }
 
 

@@ -2,6 +2,7 @@ from .literal_node import LiteralNode
 from dataclasses import dataclass
 from .......lexic.tokens import token_table, Token, TokenType
 from .......lexic.literals import literals
+from .......vm.commands import Commands, add_command, add_literal
 
 
 
@@ -35,3 +36,7 @@ class BasicLiteral(LiteralNode):
 
     def __str__(self):
         return self.__class__.__name__ + '(' + self.literal_name + ')\n'
+
+    def gen_code(self):
+        add_command(Commands.LD)
+        add_literal(literals[self.literal_name].value, literals[self.literal_name].value_type)

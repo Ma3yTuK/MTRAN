@@ -3,6 +3,7 @@ from ..node import Node
 from dataclasses import dataclass
 from ...lexic.operators_punctuation import PunctuationName, OperatorName, binary_operators, binary_operator_precedence, boolean_binary_operators, any_binray_operators_bool, numeric_binary_operators_bool, numeric_binary_operators_number
 from ...lexic.tokens import token_table, Token, TokenType
+from ...vm.commands import Commands, add_command
 from ...lexic.identifiers_and_types import BoolType, NumericType, TypeName, identifier_tables, IntegerNumbericType, FloatingNumericType, Type
 from .unary_expressions.unary_expression import UnaryExpression
 from ..syntaxis_exception import SyntaxisException
@@ -132,3 +133,62 @@ class BinaryOperation(Expression):
                 self._type = None
         
         return self._type
+
+    def gen_code(self):
+        self.argument1.gen_code()
+        self.argument2.gen_code()
+
+        match self.operator.operator:
+            case OperatorName.O_MINUS:
+                if isinstance(self.argument1.eval_type(), IntegerNumbericType):
+                    add_command(Commands.SUB)
+                else:
+                    add_command(Commands.SUBF)
+            case OperatorName.O_PLUS:
+                if isinstance(self.argument1.eval_type(), IntegerNumbericType):
+                    add_command(Commands.SUM)
+                else:
+                    add_command(Commands.SUMF)
+            case OperatorName.O_MUL_OR_REF:
+                if isinstance(self.argument1.eval_type(), IntegerNumbericType):
+                    add_command(Commands.MUL)
+                else:
+                    add_command(Commands.MULF)
+            case OperatorName.O_DIV:
+                if isinstance(self.argument1.eval_type(), IntegerNumbericType):
+                    add_command(Commands.DIV)
+                else:
+                    add_command(Commands.DIVF)
+            case OperatorName.O_MOD:
+                if isinstance(self.argument1.eval_type(), IntegerNumbericType):
+                    add_command(Commands.PERC)
+                else:
+                    add_command(Commands.PERCF)
+            case OperatorName.O_GE:
+                if isinstance(self.argument1.eval_type(), IntegerNumbericType):
+                    add_command(Commands.GE)
+                else:
+                    add_command(Commands.GEF)
+            case OperatorName.O_GT:
+                if isinstance(self.argument1.eval_type(), IntegerNumbericType):
+                    add_command(Commands.GT)
+                else:
+                    add_command(Commands.GTF)
+            case OperatorName.O_LE:
+                if isinstance(self.argument1.eval_type(), IntegerNumbericType):
+                    add_command(Commands.LE)
+                else:
+                    add_command(Commands.LEF)
+            case OperatorName.O_LT:
+                if isinstance(self.argument1.eval_type(), IntegerNumbericType):
+                    add_command(Commands.LT)
+                else:
+                    add_command(Commands.LTF)
+            case OperatorName.O_EQ:
+                add_command(Commands.EQ)
+            case OperatorName.O_NQ:
+                add_command(Commands.NQ)
+            case OperatorName.O_LAND:
+                add_command(Commands.AND)
+            case OperatorName.O_LOR:
+                add_command(Commands.OR)

@@ -6,6 +6,7 @@ from .....lexic.operators_punctuation import PunctuationName
 from ....syntaxis_exception import SyntaxisException
 from ....semantics_exception import SemanticsException
 from .....lexic.identifiers_and_types import IntegerNumbericType, FloatingNumericType
+from .....vm.commands import Commands, add_command
 
 
 
@@ -59,3 +60,13 @@ class Conversion(PrimaryExpression):
                 self._type = self.type_node.eval_type()
 
         return self._type
+    
+    def gen_code(self):
+        self.expression.gen_code()
+        
+        if self.type_node.eval_type() != self.expression.eval_type():
+            
+            if isinstance(self.type_node.eval_type(), IntegerNumbericType):
+                add_command(Commands.TOI)
+            else:
+                add_command(Commands.TOF)

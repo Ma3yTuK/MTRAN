@@ -5,4 +5,6 @@ from dataclasses import dataclass
 
 @dataclass
 class BaseStatement(Node):
-    pass
+    
+    def gen_code(self):
+        pass

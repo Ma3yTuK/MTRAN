@@ -12,7 +12,6 @@ STRING_SIZE = 256
 FLOAT_SIZE = 4
 INT_SIZE = 4
 BOOL_SIZE = 1
-TYPE_SIZE = 1
 
 
 class Identifier:

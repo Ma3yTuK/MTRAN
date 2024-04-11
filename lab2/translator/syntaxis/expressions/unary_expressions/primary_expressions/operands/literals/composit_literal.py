@@ -9,6 +9,7 @@ from typing import List
 from .......lexic.tokens import token_table, Token, TokenType
 from .......lexic.identifiers_and_types import UserType, ArrayTypeL
 from .......lexic.operators_punctuation import PunctuationName
+from .......vm.commands import Commands, add_command, add_literal
 from ......syntaxis_exception import SyntaxisException
 from ......semantics_exception import SemanticsException
 
@@ -119,6 +120,32 @@ class CompositLiteral(LiteralNode):
         if not isinstance(self.literal_type.eval_type(), UserType) and not isinstance(self.literal_type.eval_type(), ArrayTypeL):
             raise SemanticsException(self.literal_type.starting_token, "Composit type expected!")
 
+        if isinstance(self.literal_type.eval_type(), UserType):
+
+            for element in self.literal_value.elements:
+
+                if element.key is None:
+                    raise SemanticsException(element.key.starting_token, "Key expected!")
+
+                if element.key.identifier_name not in self.literal_type.eval_type().fields:
+                    raise SemanticsException(element.key.starting_token, "There is no such field!")
+                
+                if element.value.eval_type() != self.literal_type.eval_type().fields[element.key.identifier_name].field_type:
+                    raise SemanticsException(element.key.starting_token, "Incompatible type!")
+        
+        if isinstance(self.literal_type.eval_type(), ArrayTypeL):
+
+            for index, element in enumerate(self.literal_value.elements):
+
+                if element.key is not None:
+                    raise SemanticsException(element.key.starting_token, "Keyed elements are not allowed here!")
+
+                if index >= self.literal_type.eval_type().size:
+                    raise SemanticsException(element.key.starting_token, "Too many keys!")
+                
+                if element.value.eval_type() != self.literal_type.eval_type().value_type:
+                    raise SemanticsException(element.key.starting_token, "Incompatible type!")
+
     def eval_type(self):
 
         if not hasattr(self, "_type"):
@@ -129,3 +156,47 @@ class CompositLiteral(LiteralNode):
                 self._type = None
 
         return self._type
+
+    def gen_code(self):
+        value_type = self.eval_type()
+
+        if isinstance(value_type, UserType):
+            fields = dict(value_type.fields)
+
+            for element in self.literal_value.elements:
+                fields.pop(element.key.identifier_name)
+                element.value.gen_code()
+                add_command(Commands.RMS)
+
+            for current_field in value_type.fields.values():
+                in_keys = False
+                
+                for element in self.literal_value.elements:
+
+                    if element.key == current_field.field_name:
+                        element.value.gen_code()
+                        in_keys = True
+                        break
+                
+                if not in_keys:
+                    add_command(Commands.LD)
+                    add_literal(bytes(current_field.field_type.size), current_field.field_type)
+
+                add_command(Commands.RMS)
+        
+        if isinstance(value_type, ArrayTypeL):
+            index = 0
+            
+            for element in self.literal_value.elements:
+                element.value.gen_code()
+                add_command(Commands.RMS)
+                index += 1
+
+            while index != value_type.count:
+                add_command(Commands.LD)
+                add_literal(bytes(value_type.value_type.size), value_type.value_type)
+                add_command(Commands.RMS)
+                index += 1
+
+        add_command(Commands.LDP)
+        add_literal(bytes(), value_type)

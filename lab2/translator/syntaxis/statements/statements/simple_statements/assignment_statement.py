@@ -4,7 +4,8 @@ from ....expressions.expression_list import ExpressionListNode
 from dataclasses import dataclass
 from .....lexic.tokens import token_table, Token, TokenType
 from .....lexic.operators_punctuation import OperatorName, PunctuationName, assignment_operators
-from .....lexic.identifiers_and_types import identifier_tables, NumericType
+from .....lexic.identifiers_and_types import identifier_tables, NumericType, IntegerNumbericType, FloatingNumericType
+from .....vm.commands import Commands, add_command
 from ....syntaxis_exception import SyntaxisException
 from ....semantics_exception import SemanticsException
 
@@ -84,3 +85,41 @@ class AssignmentStatement(SimpleStatement):
                 
                 if expression.eval_type() != self.expression_list2.expression_list[i].eval_type():
                     raise SemanticsException(self.expression_list2.expression_list[i].starting_token, "Invalid type!")
+
+    def gen_code(self):
+        
+        for i, expression in enumerate(self.expression_list1.expression_list):
+            expression.gen_code()
+            self.expression_list2.expression_list[i].gen_code()
+
+            if self.assignment_operator.operator is None:
+                expression.gen_code()
+
+                match self.assignment_operator.operator:
+                    case OperatorName.O_MINUS:
+                        if isinstance(expression.eval_type(), IntegerNumbericType):
+                            add_command(Commands.SUB)
+                        else:
+                            add_command(Commands.SUBF)
+                    case OperatorName.O_PLUS:
+                        if isinstance(expression.eval_type(), IntegerNumbericType):
+                            add_command(Commands.SUM)
+                        else:
+                            add_command(Commands.SUMF)
+                    case OperatorName.O_MUL_OR_REF:
+                        if isinstance(expression.eval_type(), IntegerNumbericType):
+                            add_command(Commands.MUL)
+                        else:
+                            add_command(Commands.MULF)
+                    case OperatorName.O_DIV:
+                        if isinstance(expression.eval_type(), IntegerNumbericType):
+                            add_command(Commands.DIV)
+                        else:
+                            add_command(Commands.DIVF)
+                    case OperatorName.O_MOD:
+                        if isinstance(expression.eval_type(), IntegerNumbericType):
+                            add_command(Commands.PERC)
+                        else:
+                            add_command(Commands.PERCF)
+            
+            add_command(Commands.ASS)

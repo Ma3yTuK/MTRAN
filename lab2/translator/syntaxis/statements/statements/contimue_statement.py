@@ -2,14 +2,18 @@ from .statement import Statement
 from dataclasses import dataclass
 from ....lexic.tokens import token_table, Token, TokenType
 from ....lexic.keywords import KeywordName
+from ....lexic.identifiers_and_types import Variable
+from ....vm.commands import Commands, add_command, add_literal
 from .for_statement import ForStatement
 from ...syntaxis_exception import SyntaxisException
+from struct import pack
 
 
 
 @dataclass
 class ContinueStatement(Statement):
     for_statement: ForStatement
+    stack_pos: int
 
     @classmethod
     def get_node(cls, token_table_index):
@@ -22,6 +26,12 @@ class ContinueStatement(Statement):
             raise SyntaxisException(token_table[token_table_index], "Continue must be inside for")
 
         token_table_index += 1
-        new_node = cls(new_starting_token, ForStatement.for_stack[-1])
+        new_node = cls(new_starting_token, ForStatement.for_stack[-1], Variable.current_stack_pos)
 
         return token_table_index, new_node
+
+    def gen_code(self):
+        add_command(Commands.POP)
+        add_literal(pack('!i', self.stack_pos - self.for_statement.after_init_stack_pos), None)
+        add_command(Commands.JMP)
+        add_literal(pack('!i', self.for_statement.continue_pos), None)

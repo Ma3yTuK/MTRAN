@@ -2,6 +2,7 @@ from .....identifiers.identifier_node import IdentifierNode
 from ......lexic.identifiers_and_types import identifier_tables, Variable
 from .....semantics_exception import SemanticsException
 from ......lexic.tokens import token_table
+from ......vm.commands import Commands, add_reference, add_command
 from .operand import Operand
 from dataclasses import dataclass
 
@@ -28,11 +29,15 @@ class IdentifierOperand(Operand):
 
     def check_semantics(self):
 
-        for table in reversed(identifier_tables):
+        for index, table in enumerate(reversed(identifier_tables)):
 
             if self.identifier.identifier_name in table:
 
                 if isinstance(table[self.identifier.identifier_name], Variable):
+                    if index + 1 == len(identifier_tables):
+                        self.ref = table[self.identifier.identifier_name].stack_pos
+                    else:
+                        self.ref = table[self.identifier.identifier_name].stack_pos - Variable.current_stack_pos
                     return
                 else:
                     raise SemanticsException(self.starting_token, "Identifier is not expression!")
@@ -57,3 +62,7 @@ class IdentifierOperand(Operand):
                 self._type = None
         
         return self._type
+
+    def gen_code(self):
+        add_command(Commands.LD)
+        add_reference(self.ref, self.eval_type())

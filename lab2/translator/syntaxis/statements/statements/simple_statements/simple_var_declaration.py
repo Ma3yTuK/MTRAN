@@ -49,3 +49,10 @@ class SimpleVarDeclaration(SimpleStatement, BaseVarDeclaration):
                 current_type = self.values.expression_list[i]
                 identifier_tables[-1][new_var.identifier_name] = Variable(current_type.eval_type(), Variable.current_stack_pos)
                 Variable.current_stack_pos += current_type.eval_type().size
+
+    
+    def gen_code(self):
+
+        for index, identifier in enumerate(self.identifiers.identifier_list):
+            self.values.expression_list[i].gen_code()
+            add_command(Commands.PUSH)

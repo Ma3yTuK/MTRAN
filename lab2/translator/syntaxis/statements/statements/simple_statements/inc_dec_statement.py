@@ -4,9 +4,11 @@ from ....expressions.expression import Expression
 from dataclasses import dataclass
 from .....lexic.tokens import token_table, Token, TokenType
 from .....lexic.operators_punctuation import OperatorName, PunctuationName, assignment_operators
-from .....lexic.identifiers_and_types import IntegerNumbericType
+from .....lexic.identifiers_and_types import IntegerNumbericType, identifier_tables, TypeName
+from .....vm.commands import Commands, add_command, add_literal
 from ....syntaxis_exception import SyntaxisException
 from ....semantics_exception import SemanticsException
+from struct import pack
 
 
 @dataclass
@@ -58,3 +60,15 @@ class IncDecStatement(SimpleStatement):
 
         if not isinstance(self.expression.eval_type(), IntegerNumbericType):
             raise SemanticsException(self.expression.starting_token, "Expression type must be int!")
+
+    def gen_code(self):
+        self.expression.gen_code()
+        self.expression.gen_code()
+        add_literal(pack('!i', 1), token_table[0][TypeName.T_INT])
+        
+        if self.operator.operator == OperatorName.O_INCREMENT:
+            add_command(Commands.SUM)
+        else:
+            add_command(Commands.SUB)
+        
+        add_command(Commands.ASS)

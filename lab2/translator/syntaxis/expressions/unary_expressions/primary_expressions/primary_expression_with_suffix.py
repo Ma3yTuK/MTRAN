@@ -7,9 +7,11 @@ from ....suffixes.suffix import Suffix
 from ....suffixes.arguments_suffix import ArgumentsSuffix
 from ....suffixes.index_suffix import IndexSuffix
 from ....suffixes.selector_suffix import SelectorSuffix
-from .....lexic.identifiers_and_types import identifier_tables, FunctionTypeL, ArrayTypeL, UserType
+from .....lexic.identifiers_and_types import identifier_tables, FunctionTypeL, ArrayTypeL, UserType, TypeName
 from .....lexic.tokens import Token, token_table, TokenType
+from .....vm.commands import Commands, add_command, add_reference, add_literal
 from ....semantics_exception import SemanticsException
+from struct import pack
 
 
 
@@ -93,3 +95,37 @@ class PrimaryExpressionWithSuffix(PrimaryExpression):
                 self._type = None
 
         return self._type
+
+    def gen_code(self):
+
+        if isinstance(self.expression_suffix, ArgumentsSuffix):
+            for expression in self.expression_suffix.arguments_expressions.expression_list:
+                expression.gen_code()
+            self.primary_expression.gen_code()
+            add_command(Commands.CALL)
+        
+        if isinstance(self.expression_suffix, IndexSuffix):
+            self.primary_expression.get_node()
+            add_command(Commands.LD)
+            add_literal(pack("!i", self.primary_expression.eval_type().value_type.size), identifier_tables[0][TypeName.T_INT])
+            self.expression_suffix.index_expression.gen_node()
+            add_command(Commands.MUL)
+            add_command(Commands.LD)
+            add_literal(pack("!i", self.primary_expression.eval_type().value_type.size), identifier_tables[0][TypeName.T_INT])
+            add_command(Commands.SUBV)
+
+        if isinstance(self.expression_suffix, SelectorSuffix):
+            self.primary_expression.get_node()
+            shift = 0
+
+            for field in self.primary_expression.eval_type().fields.values():
+
+                if field.field_name == self.expression_suffix.operand_identifier.identifier_name:
+                    add_command(Commands.LD)
+                    add_literal(pack("!i", shift), identifier_tables[0][TypeName.T_INT])
+                    add_command(Commands.LD)
+                    add_literal(pack("!i", field.field_type.size), identifier_tables[0][TypeName.T_INT])
+                    add_command(Commands.SUBV)
+                    break
+
+                shift += field.field_type.size

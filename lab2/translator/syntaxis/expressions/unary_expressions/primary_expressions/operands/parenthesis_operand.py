@@ -39,3 +39,6 @@ class ParanthesisOperand(Operand):
             self._type = self.inner_expression.eval_type()
         
         return self._type
+
+    def gen_code(self):
+        self.inner_expression.gen_code()

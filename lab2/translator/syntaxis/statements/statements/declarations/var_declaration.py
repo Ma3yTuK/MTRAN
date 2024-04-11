@@ -11,6 +11,7 @@ from ....syntaxis_exception import SyntaxisException
 from .....lexic.keywords import KeywordName
 from .....lexic.operators_punctuation import PunctuationName, OperatorName
 from .....lexic.identifiers_and_types import identifier_tables, Variable
+from .....vm.commands import Commands, add_literal, add_command
 from ...base_var_declaration import BaseVarDeclaration
 from ....semantics_exception import SemanticsException
 
@@ -116,3 +117,17 @@ class VarDeclaration(Declaration, TopLevelDeclaration, BaseVarDeclaration):
         new_node = cls(new_starting_token, new_var_specs)
 
         return token_table_index, new_node
+
+    def gen_code(self):
+
+        for spec in self.var_specs:
+
+            for index, identifier in enumerate(spec.spec_identifiers.identifier_list):
+
+                if spec.spec_expressions is None:
+                    add_command(Commands.LD)
+                    add_literal(bytes(spec.spec_type.eval_type().size), spec.spec_type.eval_type())
+                else:
+                    spec.spec_expressions.expression_list[index].gen_code()
+
+                add_command(Commands.PUSH)

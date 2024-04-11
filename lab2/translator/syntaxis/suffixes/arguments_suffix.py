@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from ..expressions.expression_list import ExpressionListNode
 from ...lexic.tokens import token_table, Token, TokenType
 from ...lexic.operators_punctuation import PunctuationName
+from ...vm.commands import Commands, add_command, add_reference
 from ..syntaxis_exception import SyntaxisException
 
 
