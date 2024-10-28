@@ -35,3 +35,6 @@ class BreakStatement(Statement):
         add_literal(pack('!i', self.stack_pos - self.for_statement.starting_stack_pos), None)
         add_command(Commands.JMP)
         add_literal(pack('!i', self.for_statement.break_pos), None)
+
+    def __str__(self):
+        return self.__class__.__name__ + '\n'

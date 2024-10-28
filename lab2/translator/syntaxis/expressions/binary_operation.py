@@ -57,6 +57,9 @@ class BinaryOperation(Expression):
         new_addressable = False
         token_table_index = new_token_table_index
 
+        if token_table[token_table_index].token_type == TokenType.operator and token_table[token_table_index].name == OperatorName.O_ASS:
+            return token_table_index, None
+
         while new_operator != None:
             
             while operators_stack and binary_operator_precedence[new_operator.operator] <= binary_operator_precedence[operators_stack[-1].operator]:

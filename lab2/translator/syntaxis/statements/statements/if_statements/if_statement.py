@@ -58,7 +58,7 @@ class IfStatement(IfStatementOptionalPart):
             raise SemanticsException(self.condition.starting_token, "Condition must be boolean!")
 
     def gen_code(self):
-        self.condition.eval_type()
+        self.condition.gen_code()
 
         add_command(Commands.JMPIF)
         body_pos = len(code)

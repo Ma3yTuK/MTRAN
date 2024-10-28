@@ -56,7 +56,8 @@ class IdentifierOperand(Operand):
                         self._type = table[self.identifier.identifier_name].value_type
                     else:
                         self._type = None
-                        break
+                    
+                    break
 
             if not hasattr(self, "_type"):
                 self._type = None

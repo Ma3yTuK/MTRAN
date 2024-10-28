@@ -5,12 +5,13 @@ from dataclasses import dataclass
 from ...statements.if_statements.block import Block
 from .....lexic.tokens import token_table, Token, TokenType
 from .....lexic.keywords import KeywordName
-from .....lexic.identifiers_and_types import Variable, identifier_tables, FunctionTypeL, Identifier, TypeName
+from .....lexic.identifiers_and_types import Variable, identifier_tables, FunctionTypeL, Identifier, TypeName, INT_SIZE
 from ....syntaxis_exception import SyntaxisException
-from .....vm.commands import code, Commands, add_command, add_literal, add_reference
+from .....vm.commands import code, Commands, add_command, add_literal, add_reference, switch_global, unswitch_global, global_code
 from ....semantics_exception import SemanticsException
 from struct import pack
 from typing import Dict
+from typing import ClassVar
 
 
 
@@ -54,13 +55,13 @@ class FuncDeclaration(TopLevelDeclaration):
         if new_body == None:
             raise SyntaxisException(token_table[token_table_index], "Function body expected!")
 
-        if not new_node.has_returns and new_node.signature.eval_type() is not None:
+        if not new_node.has_returns and new_node.signature.result is not None:
             raise SyntaxisException(token_table[token_table_index], "Function does not return value!")
 
         new_node.body = new_body
 
         identifier_tables.pop()
-        Variable.current_stack_pos = stored_stack_pos
+        Variable.current_stack_pos = stored_stack_pos + INT_SIZE
 
         cls.func_stack.pop()
 
@@ -91,16 +92,19 @@ class FuncDeclaration(TopLevelDeclaration):
                     Variable.current_stack_pos += parameter_declaration.fields_type.eval_type().size
         
     def gen_code(self):
-
+        switch_global()
         add_command(Commands.LD)
-        add_literal(pack('!i', len(code) + self.signature.eval_type().size + 2), self.signature.eval_type())
+        add_literal(pack('!i', len(code)), self.signature.eval_type())
         add_command(Commands.PUSH)
+        unswitch_global()
 
         table_size = 0
 
-        for variable in self.identifier_table:
-            add_command(Commands.PUSH)
-            table_size += variable.value_type.size
+        for variable in self.identifier_table.values():
+            
+            if isinstance(variable, Variable):
+                add_command(Commands.PUSH)
+                table_size += variable.value_type.size
 
         self.body.gen_code()
 

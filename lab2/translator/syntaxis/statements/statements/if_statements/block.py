@@ -7,6 +7,7 @@ from .....lexic.identifiers_and_types import Identifier, Variable, identifier_ta
 from .....vm.commands import Commands, add_command, add_literal
 from ....syntaxis_exception import SyntaxisException
 from typing import Dict
+from struct import pack
 
 
 
@@ -50,8 +51,10 @@ class Block(IfStatementOptionalPart):
 
         table_size = 0
 
-        for variable in self.identifier_table:
-            table_size += variable.value_type.size
+        for variable in self.identifier_table.values():
+
+            if isinstance(variable, Variable):
+                table_size += variable.value_type.size
 
         add_command(Commands.POP)
         add_literal(pack('!i', table_size), None)

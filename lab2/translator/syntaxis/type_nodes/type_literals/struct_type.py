@@ -26,7 +26,10 @@ class FieldDeclaration(Node):
         if new_fields == None:
             return token_table_index, None
 
-        token_table_index = new_token_table_index
+        if token_table[new_token_table_index].token_type != TokenType.operator or token_table[new_token_table_index].name != PunctuationName.P_COLON:
+            raise SemanticsException(token_table[new_starting_token], "Semicolon expected!")
+
+        token_table_index = new_token_table_index + 1
         token_table_index, new_fields_type = TypeNode.get_node(token_table_index)
 
         if new_fields_type == None:
@@ -43,7 +46,7 @@ class FieldDeclaration(Node):
             field_type = self.fields_type.eval_type()
 
             for name in self.fields.identifier_list:
-                self._type[name] = UserType.TypeField(name, field_type)
+                self._type[name.identifier_name] = UserType.TypeField(name.identifier_name, field_type)
 
         return self._type
 
@@ -118,6 +121,6 @@ class StructType(TypeLiteral):
     def eval_type(self):
 
         if not hasattr(self, "_type"):
-            self._type = self.body.eval_type()
+            self._type = UserType(self.body.eval_type())
 
         return self._type

@@ -8,6 +8,8 @@ from .....lexic.tokens import token_table, Token, TokenType
 from .....lexic.operators_punctuation import OperatorName, PunctuationName
 from .....lexic.identifiers_and_types import identifier_tables, Variable
 from ....syntaxis_exception import SyntaxisException
+from ....semantics_exception import SemanticsException
+from .....vm.commands import Commands, add_command, add_literal, add_reference
 
 
 
@@ -47,6 +49,10 @@ class SimpleVarDeclaration(SimpleStatement, BaseVarDeclaration):
                 raise SemanticsException(new_var.starting_token, "Name already exists!")
             else:
                 current_type = self.values.expression_list[i]
+
+                if current_type.eval_type() is None:
+                    raise SemanticsException(current_type.starting_token, "Cannot initialize with null!")
+
                 identifier_tables[-1][new_var.identifier_name] = Variable(current_type.eval_type(), Variable.current_stack_pos)
                 Variable.current_stack_pos += current_type.eval_type().size
 
@@ -54,5 +60,5 @@ class SimpleVarDeclaration(SimpleStatement, BaseVarDeclaration):
     def gen_code(self):
 
         for index, identifier in enumerate(self.identifiers.identifier_list):
-            self.values.expression_list[i].gen_code()
+            self.values.expression_list[index].gen_code()
             add_command(Commands.PUSH)

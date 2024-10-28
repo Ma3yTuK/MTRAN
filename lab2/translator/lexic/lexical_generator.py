@@ -15,6 +15,9 @@ def lexical_generator(filepath):
         for (line_index, line) in enumerate(file):
             pos = skip_blank(line, 0)
 
+            if line[pos] == character.newline:
+                continue
+
             if line[-1] != character.newline:
                 line += character.newline
 

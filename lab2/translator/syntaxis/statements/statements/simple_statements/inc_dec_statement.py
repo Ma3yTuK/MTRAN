@@ -64,7 +64,8 @@ class IncDecStatement(SimpleStatement):
     def gen_code(self):
         self.expression.gen_code()
         self.expression.gen_code()
-        add_literal(pack('!i', 1), token_table[0][TypeName.T_INT])
+        add_command(Commands.LD)
+        add_literal(pack('!i', 1), identifier_tables[0][TypeName.T_INT])
         
         if self.operator.operator == OperatorName.O_INCREMENT:
             add_command(Commands.SUM)

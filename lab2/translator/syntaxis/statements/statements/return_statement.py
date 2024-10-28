@@ -7,6 +7,7 @@ from ....lexic.keywords import KeywordName
 from ...semantics_exception import SemanticsException
 from ....vm.commands import Commands, add_command, add_literal
 from ..top_level_statements.top_level_declarations.func_declaration import FuncDeclaration
+from struct import pack
 
 
 
@@ -37,19 +38,20 @@ class ReturnStatement(Statement):
 
         if self.value is not None:
 
-            if self.value.eval_type() != FuncDeclaration.func_stack[-1].signature.result.eval_type():
+            if FuncDeclaration.func_stack[-1].signature.result is None or self.value.eval_type() != FuncDeclaration.func_stack[-1].signature.result.eval_type():
                 raise SemanticsException(self.value.starting_token, "Invalid return type!")
 
         else:
 
-            if FuncDeclaration.func_stack[-1].signature.result.eval_type() is not None:
+            if FuncDeclaration.func_stack[-1].signature.result is not None:
                 raise SemanticsException(self.starting_token, "Function must return value!")
 
     def gen_code(self):
-        add_command(Commands.POP)
-        add_literal(pack('!i', pop_count), None)
 
         if self.value is not None:
             self.value.gen_code()
+        
+        add_command(Commands.POP)
+        add_literal(pack('!i', self.pop_count), None)
 
         add_command(Commands.RET)

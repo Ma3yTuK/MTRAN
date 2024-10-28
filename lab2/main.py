@@ -1,38 +1,51 @@
 from translator.lexic.lexical_generator import lexical_generator
 from translator.lexic.tokens import token_table
 from translator.syntaxis.syntax_analizer import syntax_analizer
-from .translator.vm.commands import code
+from translator.vm.commands import code, switch_global, execute, debug, get_code, set_code
 import sys
 
 
 
 def main():
-    # filepath = "test.txt"
+    # filepath = "test2.txt"
     # lexical_generator(filepath)
     # print(syntax_analizer())
     # return
+
+    lexical_generator("test2.txt")
+    syntax_analizer().gen_code()
+    #execute()
+    debug()
+
+    return
     
-    if len(sys.argv > 3 or len(sys.argv == 0)):
+    if len(sys.argv) > 4 or len(sys.argv) == 1 or len(sys.argv) == 3:
         raise Exception("Invalid number of arguments")
 
-    if len(sys.argv == 3):
+    if len(sys.argv) == 4:
 
-        if argv[1] != '-c':
+        if sys.argv[1] != '-c':
             raise Exception("Invalid arguments")
         
         else:
-            lexical_generator(filepath)
+            lexical_generator(sys.argv[2])
             syntax_analizer().gen_code()
+            code = get_code()
 
-            with open(argv[2], "wb") as binary_file:
+            with open(sys.argv[3], "wb") as binary_file:
                 binary_file.write(code)
 
             return
 
-    with open(argv[1], "rb") as binary_file:
-
+    with open(sys.argv[1], "rb") as binary_file:
+        code = bytearray()
+        
         while (byte := binary_file.read(1)):
             code += byte
 
+        set_code(code)
+
+    execute()
+    
 if __name__ == "__main__":
     main()

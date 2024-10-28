@@ -35,3 +35,6 @@ class ContinueStatement(Statement):
         add_literal(pack('!i', self.stack_pos - self.for_statement.after_init_stack_pos), None)
         add_command(Commands.JMP)
         add_literal(pack('!i', self.for_statement.continue_pos), None)
+
+    def __str__(self):
+        return self.__class__.__name__ + '\n'

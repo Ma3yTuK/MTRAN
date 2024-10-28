@@ -6,6 +6,7 @@ from .....lexic.operators_punctuation import PunctuationName
 from ....syntaxis_exception import SyntaxisException
 from ....semantics_exception import SemanticsException
 from .....lexic.identifiers_and_types import IntegerNumbericType, FloatingNumericType
+from .....lexic.tokens import token_table, TokenType
 from .....vm.commands import Commands, add_command
 
 
@@ -18,13 +19,17 @@ class Conversion(PrimaryExpression):
     @classmethod
     def get_node(cls, token_table_index):
         new_starting_token = token_table[token_table_index]
-        new_token_table_index, new_type_node = TypeNode.get_node(token_table_index)
+
+        try:
+            new_token_table_index, new_type_node = TypeNode.get_node(token_table_index)
+        except (SyntaxisException, SemanticsException):
+            return token_table_index, None
 
         if new_type_node == None:
             return token_table_index, None
 
         if token_table[new_token_table_index].token_type != TokenType.operator or token_table[new_token_table_index].name != PunctuationName.P_PARENTHESES_O:
-            raise SyntaxisException(new_starting_token, "Opening parenthesis expected!")
+            return token_table_index, None
 
         new_token_table_index += 1
         new_token_table_index, new_expression = Expression.get_node(new_token_table_index)
@@ -38,6 +43,7 @@ class Conversion(PrimaryExpression):
         new_token_table_index += 1
         new_addressable = False
         new_node = cls(token_table[new_token_table_index], new_addressable, new_type_node, new_expression)
+        new_node.check_semantics()
 
         return new_token_table_index, new_node
 
@@ -45,15 +51,15 @@ class Conversion(PrimaryExpression):
 
         if not self.type_node.eval_type() == self.expression.eval_type():
              
-            if not ((self.type_node.eval_type() == IntegerNumbericType and self.expression.eval_type() == FloatingNumericType) or (self.type_node.eval_type() == FloatingNumericType and self.expression.eval_type() == IntegerNumbericType)):
-                raise SemanticsException("Invalid cast!")
+            if not ((isinstance(self.type_node.eval_type(), IntegerNumbericType) and isinstance(self.expression.eval_type(), FloatingNumericType)) or (isinstance(self.type_node.eval_type(), FloatingNumericType) and isinstance(self.expression.eval_type(), IntegerNumbericType))):
+                raise SemanticsException(self.starting_token, "Invalid cast!")
 
     def eval_type(self):
 
         if not hasattr(self, "_type"):
 
             if not self.type_node.eval_type() == self.expression.eval_type():
-                if not ((self.type_node.eval_type() == IntegerNumbericType and self.expression.eval_type() == FloatingNumericType) or (self.type_node.eval_type() == FloatingNumericType and self.expression.eval_type() == IntegerNumbericType)):
+                if not ((isinstance(self.type_node.eval_type(), IntegerNumbericType) and isinstance(self.expression.eval_type(), FloatingNumericType)) or (isinstance(self.type_node.eval_type(), FloatingNumericType) and isinstance(self.expression.eval_type(), IntegerNumbericType))):
                     self._type = None
             
             if not hasattr(self, "_type"):

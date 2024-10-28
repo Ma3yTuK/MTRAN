@@ -32,17 +32,17 @@ class ForStatement(Statement):
         if token_table[token_table_index].token_type != TokenType.keyword or token_table[token_table_index].name != KeywordName.K_FOR:
             return token_table_index, None
 
-        self.starting_stack_pos = Variable.current_stack_pos
         new_identifier_table = {}
         identifier_tables.append(new_identifier_table)
 
         new_node = cls(new_starting_token, None, None, None, None, new_identifier_table)
         cls.for_stack.append(new_node)
+        new_node.starting_stack_pos = Variable.current_stack_pos
 
         token_table_index += 1
         token_table_index, new_initial_statement = SimpleStatement.get_node(token_table_index)
 
-        self.after_init_stack_pos = Variable.current_stack_pos
+        new_node.after_init_stack_pos = Variable.current_stack_pos
 
         if new_initial_statement == None:
             raise SyntaxisException(token_table[token_table_index], "Simple statement expected")
@@ -77,8 +77,8 @@ class ForStatement(Statement):
 
         cls.for_stack.pop()
         identifier_tables.pop()
-        self.end_stack_pos = Variable.current_stack_pos
-        Variable.current_stack_pos = self.starting_stack_pos
+        new_node.end_stack_pos = Variable.current_stack_pos
+        Variable.current_stack_pos = new_node.starting_stack_pos
 
         new_node.check_semantics()
 
@@ -91,9 +91,8 @@ class ForStatement(Statement):
 
     def gen_code(self):
         self.initial_statement.gen_code()
-        self.condition.gen_code()
-
         start_pos = len(code)
+        self.condition.gen_code()
 
         add_command(Commands.JMPIF)
         jump_pos = len(code)

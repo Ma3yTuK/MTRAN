@@ -36,7 +36,7 @@ class PrintStatement(Statement):
     def check_semantics(self):
 
         if not (isinstance(self.value.eval_type(), IntegerNumbericType) or isinstance(self.value.eval_type(), FloatingNumericType) or isinstance(self.value.eval_type(), StringType)):
-            raise SemanticsException(token_table[token_table_index], "Unsupported expression type!")
+            raise SemanticsException(self.value.starting_token, "Unsupported expression type!")
 
     def gen_code(self):
         self.value.gen_code()

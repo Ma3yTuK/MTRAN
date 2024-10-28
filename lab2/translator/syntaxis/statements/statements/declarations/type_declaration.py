@@ -28,7 +28,7 @@ class TypeSpec(Node):
             return token_table_index, None
         
         token_table_index = new_token_table_index
-        token_table_index, new_spec_type = TypeNode(token_table_index)
+        token_table_index, new_spec_type = TypeNode.get_node(token_table_index)
 
         if new_spec_type == None:
             raise SyntaxisException(token_table[token_table_index], "Type expected!")
@@ -43,7 +43,7 @@ class TypeSpec(Node):
         if self.spec_identifier.identifier_name in identifier_tables[-1]:
             raise SemanticsException(self.spec_identifier.starting_token, "Name already exists!")
         else:
-            identifier_tables[-1][self.spec_identifier.identifier_name] = self.spec_type
+            identifier_tables[-1][self.spec_identifier.identifier_name] = self.spec_type.eval_type()
 
 
 @dataclass
@@ -75,8 +75,12 @@ class TypeDeclaration(Declaration, TopLevelDeclaration):
 
         if parenthesis:
 
-            while token_table[token_table_index].token_type == TokenType.operator and token_table[token_table_index].name == PunctuationName.P_COMMA:
-                token_table_index += 1
+            if token_table[token_table_index].token_type != TokenType.operator or token_table[token_table_index].name != PunctuationName.P_SEMICOLON:
+                raise SyntaxisException(token_table[token_table_index], "Unexpected symbol at the end of type declaration!")
+            
+            token_table_index += 1
+
+            while token_table[token_table_index].token_type != TokenType.operator or token_table[token_table_index].name != PunctuationName.P_PARENTHESES_C:
                 token_table_index, new_type_spec = TypeSpec.get_node(token_table_index)
 
                 if new_type_spec == None:
@@ -84,8 +88,10 @@ class TypeDeclaration(Declaration, TopLevelDeclaration):
 
                 new_type_specs.append(new_type_spec)
 
-            if token_table[token_table_index].token_type != TokenType.operator or token_table[token_table_index].name != PunctuationName.P_PARENTHESES_C:
-                raise SyntaxisException(token_table[token_table_index], "Closing parenthesis expected!")
+                if token_table[token_table_index].token_type != TokenType.operator or token_table[token_table_index].name != PunctuationName.P_SEMICOLON:
+                    raise SyntaxisException(token_table[token_table_index], "Unexpected symbol at the end of type declaration!")
+
+                token_table_index += 1
 
             token_table_index += 1
         

@@ -57,7 +57,7 @@ class PrimaryExpressionWithSuffix(PrimaryExpression):
             if not isinstance(self.primary_expression.eval_type(), FunctionTypeL):
                 raise SemanticsException(self.starting_token, "Function type expected!")
 
-            if self.expression_suffix.arguments_expressions == None and self.primary_expression.eval_type().operands or len(self.expression_suffix.arguments_expressions.expression_list) != len(self.primary_expression.eval_type().operands):
+            if self.expression_suffix.arguments_expressions is None and self.primary_expression.eval_type().operands or self.expression_suffix.arguments_expressions is not None and len(self.expression_suffix.arguments_expressions.expression_list) != len(self.primary_expression.eval_type().operands):
                 raise SemanticsException(self.expression_suffix.starting_token, "Wrong number of arguments!")
 
             for i, operand_type in enumerate(self.primary_expression.eval_type().operands):
@@ -105,17 +105,17 @@ class PrimaryExpressionWithSuffix(PrimaryExpression):
             add_command(Commands.CALL)
         
         if isinstance(self.expression_suffix, IndexSuffix):
-            self.primary_expression.get_node()
+            self.primary_expression.gen_code()
             add_command(Commands.LD)
             add_literal(pack("!i", self.primary_expression.eval_type().value_type.size), identifier_tables[0][TypeName.T_INT])
-            self.expression_suffix.index_expression.gen_node()
+            self.expression_suffix.index_expression.gen_code()
             add_command(Commands.MUL)
             add_command(Commands.LD)
             add_literal(pack("!i", self.primary_expression.eval_type().value_type.size), identifier_tables[0][TypeName.T_INT])
             add_command(Commands.SUBV)
 
         if isinstance(self.expression_suffix, SelectorSuffix):
-            self.primary_expression.get_node()
+            self.primary_expression.gen_code()
             shift = 0
 
             for field in self.primary_expression.eval_type().fields.values():

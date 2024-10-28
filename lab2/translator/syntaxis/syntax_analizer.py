@@ -1,5 +1,6 @@
 from .program_node import PragramNode
 from .syntaxis_exception import SyntaxisException
+from ..lexic.tokens import token_table
 
 
 

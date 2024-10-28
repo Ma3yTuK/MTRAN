@@ -51,7 +51,8 @@ class BasicType(TypeNode):
                         self._type = table[self.type_name.identifier_name]
                     else:
                         self._type = None
-                        break
+                    
+                    break
 
             if not hasattr(self, "_type"):
                 self._type = None

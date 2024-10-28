@@ -23,7 +23,7 @@ class Identifier:
 
 class TypeName(StrEnum):
     T_INT = "int"
-    T_FLOAT32 = "float32"
+    T_FLOAT32 = "float"
     T_BOOL = "bool"
     T_STRING = "string"
 

@@ -92,7 +92,7 @@ class AssignmentStatement(SimpleStatement):
             expression.gen_code()
             self.expression_list2.expression_list[i].gen_code()
 
-            if self.assignment_operator.operator is None:
+            if self.assignment_operator.operator is not None:
                 expression.gen_code()
 
                 match self.assignment_operator.operator:

@@ -46,7 +46,7 @@ def add_literal(line, pos):
         result = line[pos:end_pos+1]
         
         if result not in literals:
-            literals[result] = Literal(identifier_tables[0][TypeName.T_STRING], identifier_tables[0][TypeName.T_STRING].from_python(result))
+            literals[result] = Literal(identifier_tables[0][TypeName.T_STRING], identifier_tables[0][TypeName.T_STRING].from_python(result[1:-1]))
 
         return end_pos + 1
 
@@ -89,8 +89,8 @@ def add_literal(line, pos):
 
     end_pos = get_identifier(line, pos)
 
-    if end_pos + 1 < pos:
-        result = line[pos, end_pos]
+    if end_pos != pos:
+        result = line[pos:end_pos]
 
         if result in {BOOLEAN_FALSE, BOOLEAN_TRUE}:
             return end_pos
